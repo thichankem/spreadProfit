@@ -8,11 +8,9 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import datetime
 from config import *
-from db_manager import load_db, save_db
-from api_service import fetch_all_prices_threaded, get_usdvnd_rate
+from db_manager import load_db, save_db, load_market_prices
 from ui_portfolio import PortfolioTab
 from ui_transactions import TransactionsTab
-from ui_prices import PricesTab
 from ui_charts import ChartsTab
 
 class GoldTrackerApp(tk.Tk):
@@ -24,39 +22,44 @@ class GoldTrackerApp(tk.Tk):
         self.configure(bg=CLR_BG)
         self.resizable(True, True)
 
+        # Thiết lập icon ứng dụng (hỗ trợ Windows .ico và đa nền tảng .png)
+        import os
+        try:
+            icon_ico = os.path.join(os.path.dirname(__file__), "app_icon.ico")
+            icon_png = os.path.join(os.path.dirname(__file__), "app_icon.png")
+            if os.path.exists(icon_ico):
+                self.iconbitmap(icon_ico)
+            elif os.path.exists(icon_png):
+                img = tk.PhotoImage(file=icon_png)
+                self.iconphoto(False, img)
+        except Exception as e:
+            print(f"Không thể tải icon: {e}")
+
         # 1. Tải cơ sở dữ liệu JSON
         self.db = load_db()
 
-        # 2. Khởi tạo biến trạng thái giá thị trường
-        # Cấu trúc: {ticker: {"buy": float, "sell": float}}
-        self.current_prices = {}
-        
-        # Điền sẵn giá trị ban đầu bằng 0 cho các default assets
-        for item in DEFAULT_ASSETS:
-            self.current_prices[item["ticker"]] = {"buy": 0.0, "sell": 0.0}
+        # 2. Khởi tạo và tải giá thị trường từ file nội bộ (offline)
+        self.current_prices = load_market_prices()
 
         # Biến trạng thái hiển thị thanh trạng thái
-        self.var_status = tk.StringVar(value="Sẵn sàng.")
+        self.var_status = tk.StringVar(value="Sẵn sàng (Ngoại tuyến).")
 
         # 3. Thiết kế giao diện chính
         self._build_ui()
         self._apply_styles()
 
-        # 4. Kích hoạt lấy giá trực tuyến ngay khi mở ứng dụng (chạy ngầm)
-        self.refresh_prices()
-
     def _build_ui(self):
-        # ────────── THANH TIÊU ĐỀ TRÊN CÙNG ──────────
-        top_bar = tk.Frame(self, bg=CLR_GOLD, pady=8)
+        # ────────── THANH TIÊU ĐỀ TRÊN CÙNG (Sleek Dark Theme) ──────────
+        top_bar = tk.Frame(self, bg=CLR_PANEL, pady=12, bd=0, highlightbackground=CLR_BORDER, highlightthickness=1)
         top_bar.pack(fill="x")
         
-        title_lbl = tk.Label(top_bar, text="💰  QUẢN LÝ TÀI SẢN CÁ NHÂN LOCAL",
-                             font=("Segoe UI", 15, "bold"), bg=CLR_GOLD, fg="white")
+        title_lbl = tk.Label(top_bar, text="💰  QUẢN LÝ TÀI SẢN CÁ NHÂN",
+                             font=("Segoe UI", 18, "bold"), bg=CLR_PANEL, fg=CLR_GOLD)
         title_lbl.pack()
         
-        subtitle_lbl = tk.Label(top_bar, text="Tính Lời/Lỗ Thực Tế Theo Spread & Cập Nhật Giá Tự Động Qua API",
-                                font=("Segoe UI", 10, "italic"), bg=CLR_GOLD, fg="#fff8dc")
-        subtitle_lbl.pack()
+        subtitle_lbl = tk.Label(top_bar, text="Hệ thống Quản lý Danh mục & Tính Lợi nhuận Offline Bảo mật",
+                                font=("Segoe UI", 10, "italic"), bg=CLR_PANEL, fg=CLR_TEXT_MUTED)
+        subtitle_lbl.pack(pady=(2, 0))
 
         # ────────── KHUNG CHỨA CÁC TAB CHÍNH ──────────
         # Sử dụng ttk.Notebook để tạo các tab tiện lợi
@@ -66,13 +69,11 @@ class GoldTrackerApp(tk.Tk):
         # Khởi tạo các Tab
         self.tab_portfolio = PortfolioTab(self.notebook, self)
         self.tab_transactions = TransactionsTab(self.notebook, self)
-        self.tab_prices = PricesTab(self.notebook, self)
         self.tab_charts = ChartsTab(self.notebook, self)
 
         # Thêm các tab vào Notebook
         self.notebook.add(self.tab_portfolio, text=" 💼  Danh mục & Lời/Lỗ ")
         self.notebook.add(self.tab_transactions, text=" 📝  Lịch sử giao dịch ")
-        self.notebook.add(self.tab_prices, text=" 📊  Bảng giá thị trường ")
         self.notebook.add(self.tab_charts, text=" 📈  Biểu đồ phân tích ")
 
         # Lắng nghe sự kiện chuyển Tab để tự động vẽ lại biểu đồ hoặc refresh bảng
@@ -86,29 +87,35 @@ class GoldTrackerApp(tk.Tk):
                               bg=CLR_PANEL, fg=CLR_TEXT_MUTED, anchor="w")
         lbl_status.pack(side="left", padx=10, pady=5, fill="x", expand=True)
 
-        self.btn_refresh_global = tk.Button(status_bar, text="🔄 Cập nhật giá", command=self.refresh_prices,
-                                            bg="#4f46e5", fg="white", font=("Segoe UI", 8, "bold"),
-                                            relief="flat", padx=10, pady=3, cursor="hand2")
-        self.btn_refresh_global.pack(side="right", padx=10, pady=3)
-
     def _apply_styles(self):
-        """Thiết lập Style của ttk widget để đồng bộ giao diện tối (Dark Theme)."""
+        """Thiết lập Style của ttk widget để đồng bộ giao diện tối phẳng (Clam Theme)."""
         style = ttk.Style()
-        style.theme_use("default")
+        style.theme_use("clam")
         
         # Cấu hình Treeview (Bảng biểu)
         style.configure("Treeview",
                         background=CLR_PANEL,
                         foreground=CLR_TEXT,
                         fieldbackground=CLR_PANEL,
-                        rowheight=24,
-                        font=("Consolas", 9.5))
+                        rowheight=26,
+                        font=("Segoe UI", 9.5),
+                        bordercolor=CLR_BORDER,
+                        borderwidth=1)
+        
         style.configure("Treeview.Heading",
                         background=CLR_ENTRY,
                         foreground=CLR_HEAD,
                         font=FONT_BOLD,
-                        borderwidth=1)
-        style.map("Treeview", background=[("selected", "#334155")]) # Màu xám xanh khi chọn dòng
+                        borderwidth=1,
+                        relief="flat")
+                        
+        style.map("Treeview", 
+                  background=[("selected", "#4f46e5")], # Màu nền xanh Indigo sáng đẹp khi chọn dòng
+                  foreground=[("selected", "white")])
+                  
+        style.map("Treeview.Heading",
+                  background=[("active", "#475569")],
+                  foreground=[("active", "white")])
 
         # Cấu hình Tab (Notebook)
         style.configure("TNotebook", background=CLR_BG, borderwidth=0)
@@ -116,19 +123,45 @@ class GoldTrackerApp(tk.Tk):
                         background=CLR_PANEL,
                         foreground=CLR_TEXT_MUTED,
                         font=FONT_BOLD,
-                        padding=[12, 6],
-                        borderwidth=1,
-                        relief="flat")
+                        padding=[16, 8],
+                        borderwidth=0,
+                        focuscolor="")
+                        
         style.map("TNotebook.Tab",
                   background=[("selected", CLR_BG)],
                   foreground=[("selected", CLR_GOLD)])
 
-        # Cấu hình Combobox
+        # Cấu hình Combobox phẳng
         style.configure("TCombobox",
                         fieldbackground=CLR_ENTRY,
                         background=CLR_ENTRY,
                         foreground=CLR_TEXT,
-                        selectbackground=CLR_ENTRY)
+                        bordercolor=CLR_BORDER,
+                        lightcolor=CLR_BORDER,
+                        darkcolor=CLR_BORDER,
+                        arrowcolor=CLR_TEXT)
+        style.map("TCombobox", 
+                  fieldbackground=[("readonly", CLR_ENTRY)],
+                  foreground=[("readonly", CLR_TEXT)])
+
+        # Cấu hình thanh cuộn Scrollbar tối tối giản
+        style.configure("Vertical.TScrollbar",
+                        gripcount=0,
+                        background=CLR_ENTRY,
+                        darkcolor=CLR_PANEL,
+                        lightcolor=CLR_PANEL,
+                        troughcolor=CLR_BG,
+                        bordercolor=CLR_BORDER,
+                        arrowcolor=CLR_TEXT_MUTED)
+                        
+        style.configure("Horizontal.TScrollbar",
+                        gripcount=0,
+                        background=CLR_ENTRY,
+                        darkcolor=CLR_PANEL,
+                        lightcolor=CLR_PANEL,
+                        troughcolor=CLR_BG,
+                        bordercolor=CLR_BORDER,
+                        arrowcolor=CLR_TEXT_MUTED)
 
     def _on_tab_changed(self, event):
         """Tự động làm mới dữ liệu/biểu đồ khi người dùng nhấp chọn Tab."""
@@ -138,56 +171,15 @@ class GoldTrackerApp(tk.Tk):
             self.tab_portfolio.refresh_view()
         elif tab_idx == 1:  # Tab Giao dịch
             self.tab_transactions.refresh_table()
-        elif tab_idx == 2:  # Tab Bảng giá
-            self.tab_prices.refresh_table()
-        elif tab_idx == 3:  # Tab Biểu đồ
+        elif tab_idx == 2:  # Tab Biểu đồ
             self.tab_charts.draw_charts()
 
     def refresh_prices(self):
-        """Khởi chạy luồng chạy ngầm để lấy giá tài sản thực tế từ Internet."""
-        self.var_status.set("⏳ Đang tải giá trực tuyến mới nhất qua API...")
-        self.btn_refresh_global.configure(state="disabled", bg="#6b7280")
-
-        # Thu thập các ticker cần lấy giá: default + các ticker người dùng tự thêm trong DB
-        tickers_to_fetch = []
-        seen_tickers = set()
-
-        # Thêm từ default
-        for item in DEFAULT_ASSETS:
-            if item["ticker"] not in seen_tickers:
-                tickers_to_fetch.append({
-                    "ticker": item["ticker"],
-                    "category": item["category"],
-                    "unit": item["unit"]
-                })
-                seen_tickers.add(item["ticker"])
-
-        # Thêm từ DB thực tế
-        for r in self.db:
-            ticker = r.get("ticker", "")
-            if ticker and ticker not in seen_tickers:
-                tickers_to_fetch.append({
-                    "ticker": ticker,
-                    "category": r.get("category", "Khác"),
-                    "unit": r["unit"]
-                })
-                seen_tickers.add(ticker)
-
-        # Chạy Threading ngầm lấy giá tránh làm đơ giao diện chính
-        fetch_all_prices_threaded(tickers_to_fetch, self._on_prices_fetched)
-
-    def _on_prices_fetched(self, results):
-        """Hàm callback chạy trên luồng chính khi tải giá hoàn tất."""
-        # Cập nhật kết quả vào từ điển giá hiện tại của ứng dụng
-        self.current_prices.update(results)
-        
-        now = datetime.datetime.now().strftime("%H:%M:%S")
-        self.var_status.set(f"✅ Đã cập nhật giá trực tuyến lúc {now}.")
-        
-        # Bật lại nút Cập nhật
-        self.btn_refresh_global.configure(state="normal", bg="#4f46e5")
-
-        # Refresh lại màn hình tab hiện tại đang mở
+        """Tải lại giá từ file lưu trữ cục bộ."""
+        self.var_status.set("⏳ Đang nạp giá từ bộ nhớ cục bộ...")
+        from db_manager import load_market_prices
+        self.current_prices = load_market_prices()
+        self.var_status.set("✅ Đã nạp giá từ bộ nhớ cục bộ (Ngoại tuyến).")
         self._refresh_current_active_tab()
 
     def _refresh_current_active_tab(self):
@@ -198,8 +190,6 @@ class GoldTrackerApp(tk.Tk):
         elif tab_idx == 1:
             self.tab_transactions.refresh_table()
         elif tab_idx == 2:
-            self.tab_prices.refresh_table()
-        elif tab_idx == 3:
             self.tab_charts.draw_charts()
 
     def refresh_portfolio_view(self):
@@ -207,5 +197,5 @@ class GoldTrackerApp(tk.Tk):
         self.tab_portfolio.refresh_view()
         # Nếu đang ở tab biểu đồ thì vẽ lại biểu đồ luôn
         tab_idx = self.notebook.index(self.notebook.select())
-        if tab_idx == 3:
+        if tab_idx == 2:
             self.tab_charts.draw_charts()
