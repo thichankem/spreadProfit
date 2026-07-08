@@ -66,7 +66,7 @@ def calculate_portfolio(transactions, current_prices):
     
     for r in sorted_txs:
         asset = r["asset"]
-        category = r.get("category", "Khác")
+        category = r.get("category", "Vàng")
         ticker = r.get("ticker", "")
         unit = r["unit"]
         
@@ -89,51 +89,68 @@ def calculate_portfolio(transactions, current_prices):
         else:  # Bán
             if holdings[asset]["qty"] > 0:
                 avg_cost = holdings[asset]["cost"] / holdings[asset]["qty"]
-                # Giảm số lượng nắm giữ
                 holdings[asset]["qty"] -= qty
-                # Giảm giá trị vốn tương ứng với số lượng bán theo giá vốn bình quân
                 holdings[asset]["cost"] -= qty * avg_cost
                 
-                # Tránh lỗi sai số dấu phẩy động làm qty < 0 rất nhỏ
                 if holdings[asset]["qty"] < 1e-9:
                     holdings[asset]["qty"] = 0.0
                     holdings[asset]["cost"] = 0.0
 
-    # Tính toán giá trị hiện tại và lời lỗ
+    # Định nghĩa các yếu tố quy đổi đơn vị
+    def get_factor(u_str):
+        u = str(u_str).strip().lower()
+        factors = {
+            "lượng": 1.2057,
+            "cây": 1.2057,
+            "cay": 1.2057,
+            "luong": 1.2057,
+            "chỉ": 0.12057,
+            "chi": 0.12057,
+            "ounce": 1.0,
+            "oz": 1.0
+        }
+        return factors.get(u, 1.0)
+
+    # Tính toán giá trị hiện tại và lời lỗ theo giá của Nhóm tài sản
     total_cost = 0.0
     total_value = 0.0
     total_pnl = 0.0
     
     active_holdings = {}
     for asset, h in holdings.items():
-        # Chỉ hiển thị tài sản còn số lượng nắm giữ > 0
         if h["qty"] <= 0:
             continue
             
         avg_price = h["cost"] / h["qty"]
-        ticker = h["ticker"]
+        cat = h["category"]
         
-        # Lấy giá mua vào trên thị trường (bạn bán ra) để tính giá trị danh mục
-        market_price = 0.0
-        if ticker in current_prices:
-            market_price = current_prices[ticker].get("buy", 0.0)
+        # Tìm giá mua vào trên thị trường của Nhóm tài sản này
+        price_info = current_prices.get(cat, {"buy": 0.0, "sell": 0.0, "unit": "Lượng"})
+        market_buy_price = price_info.get("buy", 0.0)
+        price_unit = price_info.get("unit", "Lượng")
+        
+        # Quy đổi giá thị trường của nhóm sang đơn vị của tài sản
+        if market_buy_price > 0:
+            ratio = get_factor(price_unit) / get_factor(h["unit"])
+            asset_market_price = market_buy_price / ratio
+        else:
+            asset_market_price = 0.0
             
-        current_val = h["qty"] * market_price
-        pnl = current_val - h["cost"] if market_price > 0 else 0.0
-        pnl_pct = (pnl / h["cost"] * 100) if (h["cost"] > 0 and market_price > 0) else 0.0
+        current_val = h["qty"] * asset_market_price
+        pnl = current_val - h["cost"] if asset_market_price > 0 else 0.0
+        pnl_pct = (pnl / h["cost"] * 100) if (h["cost"] > 0 and asset_market_price > 0) else 0.0
         
         h["avg_price"] = avg_price
-        h["market_price"] = market_price
+        h["market_price"] = asset_market_price
         h["current_value"] = current_val
         h["pnl"] = pnl
         h["pnl_pct"] = pnl_pct
         
         total_cost += h["cost"]
-        if market_price > 0:
+        if asset_market_price > 0:
             total_value += current_val
             total_pnl += pnl
         else:
-            # Nếu không có giá thị trường, xem như giá trị hiện tại = giá vốn (không lãi lỗ tạm tính)
             total_value += h["cost"]
             
         active_holdings[asset] = h
@@ -148,3 +165,30 @@ def calculate_portfolio(transactions, current_prices):
     }
     
     return active_holdings, summary
+
+
+PRICES_FILE = "market_prices.json"
+
+def load_market_prices():
+    """Tải giá thị trường thủ công theo Nhóm (Vàng/Bạc) từ file JSON."""
+    if os.path.exists(PRICES_FILE):
+        try:
+            with open(PRICES_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if "Vàng" in data and "Bạc" in data:
+                    return data
+        except Exception:
+            pass
+            
+    # Tạo giá trị mặc định cho Vàng và Bạc
+    prices = {
+        "Vàng": {"buy": 80000000.0, "sell": 81000000.0, "unit": "Lượng"},
+        "Bạc": {"buy": 1000000.0, "sell": 1050000.0, "unit": "Lượng"}
+    }
+    save_market_prices(prices)
+    return prices
+
+def save_market_prices(prices):
+    """Lưu giá thị trường vào file JSON."""
+    with open(PRICES_FILE, "w", encoding="utf-8") as f:
+        json.dump(prices, f, ensure_ascii=False, indent=2)
