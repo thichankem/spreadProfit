@@ -23,7 +23,7 @@ CLR_GOLD      = "#f59e0b"  # Vàng kim loại quý (Amber 500)
 CLR_HEAD      = "#818cf8"  # Tím nhạt cho tiêu đề (Indigo 400)
 
 # Danh mục nhóm tài sản
-ASSET_CATEGORIES = ["Vàng", "Bạc", "Cổ phiếu", "Tiền điện tử", "Ngoại tệ", "Khác"]
+ASSET_CATEGORIES = ["Vàng", "Bạc"]
 
 # Tỷ giá chuyển đổi
 # 1 Ounce vàng/bạc troy = 31.1034768 grams.
@@ -50,35 +50,5 @@ DEFAULT_ASSETS = [
         "category": "Bạc",
         "ticker": "SI=F",
         "unit": "Lượng"
-    },
-    {
-        "name": "Cổ phiếu FPT",
-        "category": "Cổ phiếu",
-        "ticker": "FPT.VN",
-        "unit": "CP"
-    },
-    {
-        "name": "Cổ phiếu Hòa Phát",
-        "category": "Cổ phiếu",
-        "ticker": "HPG.VN",
-        "unit": "CP"
-    },
-    {
-        "name": "Bitcoin (BTC)",
-        "category": "Tiền điện tử",
-        "ticker": "BTC-USD",
-        "unit": "BTC"
-    },
-    {
-        "name": "Ethereum (ETH)",
-        "category": "Tiền điện tử",
-        "ticker": "ETH-USD",
-        "unit": "ETH"
-    },
-    {
-        "name": "Đô la Mỹ (USD)",
-        "category": "Ngoại tệ",
-        "ticker": "USDVND=X",
-        "unit": "USD"
     }
 ]
