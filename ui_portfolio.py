@@ -170,6 +170,19 @@ class PortfolioTab(tk.Frame):
         # Lưu trữ dữ liệu danh mục để phục vụ What-If
         self.active_holdings = {}
 
+        # Đăng ký sự kiện định dạng tiền tệ khi nhận/mất tiêu điểm để tránh lỗi nhảy con trỏ gõ số
+        self.ent_buy.bind("<FocusOut>", lambda e: self._format_price_on_focus_out(self.var_buy_price))
+        self.ent_buy.bind("<FocusIn>", lambda e: self._strip_price_on_focus_in(self.var_buy_price, self.ent_buy))
+        self.ent_buy.bind("<Return>", lambda e: self._format_price_on_focus_out(self.var_buy_price))
+
+        self.ent_sell.bind("<FocusOut>", lambda e: self._format_price_on_focus_out(self.var_sell_price))
+        self.ent_sell.bind("<FocusIn>", lambda e: self._strip_price_on_focus_in(self.var_sell_price, self.ent_sell))
+        self.ent_sell.bind("<Return>", lambda e: self._format_price_on_focus_out(self.var_sell_price))
+
+        self.ent_target.bind("<FocusOut>", lambda e: self._format_price_on_focus_out(self.var_wi_target_price))
+        self.ent_target.bind("<FocusIn>", lambda e: self._strip_price_on_focus_in(self.var_wi_target_price, self.ent_target))
+        self.ent_target.bind("<Return>", lambda e: self._format_price_on_focus_out(self.var_wi_target_price))
+
     def refresh_view(self):
         """Tính toán lại danh mục đầu tư và hiển thị dữ liệu mới lên màn hình."""
         # 1. Thực hiện tính toán danh mục gốc
@@ -196,15 +209,17 @@ class PortfolioTab(tk.Frame):
             filtered_pnl += h["pnl"]
 
             tag = "green" if h["pnl"] >= 0 else "red"
-            sign_item = "+" if h["pnl"] >= 0 else ""
-            sign_pct_item = "+" if h["pnl_pct"] >= 0 else ""
             
-            pnl_str = f"{sign_item}{h['pnl']:,.0f}đ" if h["market_price"] > 0 else "—"
-            pnl_pct_str = f"{sign_pct_item}{h['pnl_pct']:.2f}%" if h["market_price"] > 0 else "—"
+            pnl_indicator = "🟢 +" if h["pnl"] >= 0 else "🔴 -"
+            pnl_str = f"{pnl_indicator}{abs(h['pnl']):,.0f}đ" if h["market_price"] > 0 else "—"
+            
+            pct_sign = "+" if h["pnl_pct"] >= 0 else ""
+            pnl_pct_str = f"{pct_sign}{h['pnl_pct']:.2f}%" if h["market_price"] > 0 else "—"
+            
             market_price_str = f"{h['market_price']:,.0f}" if h["market_price"] > 0 else "—"
             current_value_str = f"{h['current_value']:,.0f}" if h["market_price"] > 0 else "—"
 
-            self.tree.insert("", "end", tag=tag, values=(
+            self.tree.insert("", "end", tags=(tag,), values=(
                 h["asset"],
                 h["category"],
                 f"{h['qty']:g}",
@@ -335,3 +350,24 @@ class PortfolioTab(tk.Frame):
             f"   Tổng tiền thu về: {total_proceeds:,.0f} đ\n"
             f"   Lợi nhuận ròng dự tính: {sign}{pnl:,.0f} đ ({status})  |  Tỷ suất: {sign_pct}{roi:.2f}%"
         )
+
+    def _format_price_on_focus_out(self, var_price):
+        """Định dạng đơn giá có dấu phân cách hàng nghìn khi rời khỏi ô hoặc nhấn Enter."""
+        try:
+            val = var_price.get()
+            clean_val = "".join([c for c in val.replace(",", "") if c.isdigit()])
+            if clean_val:
+                var_price.set(f"{int(clean_val):,}")
+        except Exception:
+            pass
+
+    def _strip_price_on_focus_in(self, var_price, ent_widget):
+        """Xóa dấu phẩy phân cách khi bắt đầu gõ để tránh lỗi nhảy con trỏ chuột."""
+        try:
+            val = var_price.get()
+            clean_val = val.replace(",", "")
+            var_price.set(clean_val)
+            # Chuyển con trỏ xuống cuối, không bôi đen
+            ent_widget.icursor(tk.END)
+        except Exception:
+            pass
