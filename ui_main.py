@@ -1,9 +1,11 @@
 # ui_main.py
 """
 Giao diện chính của ứng dụng Quản lý tài sản (GoldTrackerApp).
-Chịu trách nhiệm khởi tạo các Tab, quản lý cơ sở dữ liệu chung và điều phối luồng cập nhật giá API.
+Chịu trách nhiệm khởi tạo các Tab, quản lý cơ sở dữ liệu chung và điều phối luồng cập nhật giá thị trường.
 """
 
+import os
+import sys
 import tkinter as tk
 from tkinter import ttk, messagebox
 import datetime
@@ -12,6 +14,16 @@ from db_manager import load_db, save_db, load_market_prices
 from ui_portfolio import PortfolioTab
 from ui_transactions import TransactionsTab
 from ui_charts import ChartsTab
+
+
+def resource_path(relative_path):
+    """Return the absolute path to a resource, whether running as script or PyInstaller bundle."""
+    if getattr(sys, "frozen", False):
+        base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(sys.executable)))
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, relative_path)
+
 
 class GoldTrackerApp(tk.Tk):
     def __init__(self):
@@ -23,10 +35,9 @@ class GoldTrackerApp(tk.Tk):
         self.resizable(True, True)
 
         # Thiết lập icon ứng dụng (hỗ trợ Windows .ico và đa nền tảng .png)
-        import os
         try:
-            icon_ico = os.path.join(os.path.dirname(__file__), "app_icon.ico")
-            icon_png = os.path.join(os.path.dirname(__file__), "app_icon.png")
+            icon_ico = resource_path("app_icon.ico")
+            icon_png = resource_path("app_icon.png")
             if os.path.exists(icon_ico):
                 self.iconbitmap(icon_ico)
             elif os.path.exists(icon_png):
@@ -44,9 +55,19 @@ class GoldTrackerApp(tk.Tk):
         # Biến trạng thái hiển thị thanh trạng thái
         self.var_status = tk.StringVar(value="Sẵn sàng (Ngoại tuyến).")
 
+        # Cấu hình màu bôi đen (selection) cho toàn bộ ô nhập tk.Entry
+        self.option_add("*Entry.selectBackground", "#4f46e5")
+        self.option_add("*Entry.selectForeground", "white")
+
         # 3. Thiết kế giao diện chính
         self._build_ui()
         self._apply_styles()
+        # Nạp dữ liệu ban đầu vào các Tab để hiển thị ngay khi khởi động
+        try:
+            self.tab_transactions.refresh_table()
+            self.tab_portfolio.refresh_view()
+        except Exception:
+            pass
 
     def _build_ui(self):
         # ────────── THANH TIÊU ĐỀ TRÊN CÙNG (Sleek Dark Theme) ──────────
@@ -92,25 +113,26 @@ class GoldTrackerApp(tk.Tk):
         style = ttk.Style()
         style.theme_use("clam")
         
-        # Cấu hình Treeview (Bảng biểu)
+        # Cấu hình Treeview (Bảng biểu) tối màu và hiện đại
         style.configure("Treeview",
                         background=CLR_PANEL,
                         foreground=CLR_TEXT,
                         fieldbackground=CLR_PANEL,
-                        rowheight=26,
-                        font=("Segoe UI", 9.5),
+                        rowheight=30, # Hàng cao thoáng đẹp, không bị chật
+                        font=("Segoe UI", 10), # Cỡ chữ to rõ nét
                         bordercolor=CLR_BORDER,
                         borderwidth=1)
         
         style.configure("Treeview.Heading",
                         background=CLR_ENTRY,
                         foreground=CLR_HEAD,
-                        font=FONT_BOLD,
+                        font=("Segoe UI", 10, "bold"), # Phông tiêu đề đậm nét
                         borderwidth=1,
                         relief="flat")
                         
+        # Khóa cứng màu chữ/nền tối để tránh bug ẩn chữ của Windows nhưng vẫn cho phép màu sắc của Tag hoạt động
         style.map("Treeview", 
-                  background=[("selected", "#4f46e5")], # Màu nền xanh Indigo sáng đẹp khi chọn dòng
+                  background=[("selected", "#4f46e5"), ("!selected", CLR_PANEL)],
                   foreground=[("selected", "white")])
                   
         style.map("Treeview.Heading",
