@@ -5,8 +5,19 @@ Quản lý cơ sở dữ liệu giao dịch dưới dạng JSON và tính toán 
 
 import json
 import os
+import sys
 
-DB_FILE = "gold_transactions.json"
+# Base directory for data files.
+# When chạy ở chế độ PyInstaller một file, dùng thư mục chứa exe để lưu dữ liệu vì _MEIPASS chỉ là thư mục tạm và không phù hợp ghi file.
+if getattr(sys, "frozen", False):
+    BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DB_FILE = os.path.join(BASE_DIR, "gold_transactions.json")
+PRICES_FILE = os.path.join(BASE_DIR, "market_prices.json")
+CUSTOM_ASSETS_FILE = os.path.join(BASE_DIR, "custom_assets.json")
+
 
 def load_db():
     """Tải dữ liệu từ file JSON. Nếu file chưa tồn tại, khởi tạo dữ liệu mẫu."""
@@ -25,7 +36,6 @@ def load_db():
             "date": "2026-03-26",
             "category": "Vàng",
             "asset": "Vàng nhẫn 24K Bảo Tín Mạnh Hải",
-            "ticker": "Doji",  # Gắn tạm vào Doji để lấy giá tự động
             "action": "Mua",
             "quantity": 2.0,
             "unit": "Chỉ",
@@ -54,7 +64,7 @@ def calculate_portfolio(transactions, current_prices):
     Tính toán trạng thái danh mục đầu tư hiện tại từ các giao dịch.
     Áp dụng phương pháp giá vốn bình quân gia quyền di động.
     
-    current_prices: dict chứa giá thị trường {ticker: {"buy": price, "sell": price}}
+    current_prices: dict chứa giá thị trường {category: {"buy": price, "sell": price}}
     Trả về:
         holdings: dict {asset_name -> dữ liệu tài sản}
         summary: dict chứa tổng số liệu (total_cost, total_value, total_pnl, pnl_pct)
@@ -67,14 +77,12 @@ def calculate_portfolio(transactions, current_prices):
     for r in sorted_txs:
         asset = r["asset"]
         category = r.get("category", "Vàng")
-        ticker = r.get("ticker", "")
         unit = r["unit"]
         
         if asset not in holdings:
             holdings[asset] = {
                 "asset": asset,
                 "category": category,
-                "ticker": ticker,
                 "qty": 0.0,
                 "cost": 0.0,
                 "unit": unit
@@ -106,6 +114,20 @@ def calculate_portfolio(transactions, current_prices):
             "luong": 1.2057,
             "chỉ": 0.12057,
             "chi": 0.12057,
+            "0.1 chỉ": 0.012057,
+            "0.1 chi": 0.012057,
+            "0.2 chỉ": 0.024114,
+            "0.2 chi": 0.024114,
+            "0.3 chỉ": 0.036171,
+            "0.3 chi": 0.036171,
+            "0.5 chỉ": 0.060285,
+            "0.5 chi": 0.060285,
+            "2 chỉ": 0.24114,
+            "2 chi": 0.24114,
+            "3 chỉ": 0.36171,
+            "3 chi": 0.36171,
+            "5 chỉ": 0.60285,
+            "5 chi": 0.60285,
             "ounce": 1.0,
             "oz": 1.0
         }
@@ -192,3 +214,21 @@ def save_market_prices(prices):
     """Lưu giá thị trường vào file JSON."""
     with open(PRICES_FILE, "w", encoding="utf-8") as f:
         json.dump(prices, f, ensure_ascii=False, indent=2)
+
+
+CUSTOM_ASSETS_FILE = "custom_assets.json"
+
+def load_custom_assets():
+    """Tải danh sách tài sản tùy chọn của người dùng."""
+    if os.path.exists(CUSTOM_ASSETS_FILE):
+        try:
+            with open(CUSTOM_ASSETS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+
+def save_custom_assets(assets):
+    """Lưu danh sách tài sản tùy chọn."""
+    with open(CUSTOM_ASSETS_FILE, "w", encoding="utf-8") as f:
+        json.dump(assets, f, ensure_ascii=False, indent=2)
