@@ -36,19 +36,16 @@ DEFAULT_ASSETS = [
     {
         "name": "Vàng miếng SJC",
         "category": "Vàng",
-        "ticker": "SJC",
         "unit": "Lượng"
     },
     {
         "name": "Vàng nhẫn Doji",
         "category": "Vàng",
-        "ticker": "Doji",
         "unit": "Chỉ"
     },
     {
         "name": "Bạc Thế Giới",
         "category": "Bạc",
-        "ticker": "SI=F",
         "unit": "Lượng"
     }
 ]
