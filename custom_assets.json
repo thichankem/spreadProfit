@@ -18,5 +18,10 @@
     "name": "Nhẫn tròn 1 chỉ",
     "category": "Vàng",
     "unit": "Lượng"
+  },
+  {
+    "name": "Bạc miếng 1 lượng",
+    "category": "Bạc",
+    "unit": "Lượng"
   }
 ]
