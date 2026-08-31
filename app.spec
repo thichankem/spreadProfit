@@ -1,16 +1,35 @@
 # -*- mode: python ; coding: utf-8 -*-
+"""
+Cấu hình PyInstaller: đóng gói toàn bộ ứng dụng thành MỘT file exe duy nhất,
+kèm dữ liệu hiện tại được nhúng sẵn (thư mục _seed) để chạy được ngay trên máy Windows mới.
+"""
 
+datas = [
+    ('app_icon.ico', '.'),
+    ('app_icon.png', '.'),
+    ('_seed/gold_transactions.json', '_seed'),
+    ('_seed/market_prices.json', '_seed'),
+    ('_seed/custom_assets.json', '_seed'),
+]
 
 a = Analysis(
     ['app.py'],
     pathex=[],
     binaries=[],
-    datas=[('app_icon.ico', '.')],
-    hiddenimports=[],
+    datas=datas,
+    hiddenimports=[
+        'openpyxl',
+        'matplotlib.backends.backend_tkagg',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=[
+        'PyQt5', 'PyQt6', 'PySide2', 'PySide6', 'wx',
+        'IPython', 'jupyter', 'notebook', 'nbconvert', 'nbformat',
+        'scipy', 'pandas', 'sympy', 'pytest', 'sphinx',
+        'tornado', 'zmq', 'test', 'setuptools',
+    ],
     noarchive=False,
     optimize=0,
 )
@@ -22,7 +41,8 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='app',
+    name='QuanLyTaiSan',
+    icon='app_icon.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

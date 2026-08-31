@@ -984,8 +984,8 @@ class TransactionsTab(tk.Frame):
             return
             
         # Tự động tạo thư mục exports riêng biệt
-        project_root = os.path.dirname(os.path.abspath(__file__))
-        exports_dir = os.path.join(project_root, "exports")
+        from db_manager import DATA_DIR
+        exports_dir = os.path.join(DATA_DIR, "exports")
         os.makedirs(exports_dir, exist_ok=True)
         
         default_name = f"giao_dich_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -1065,8 +1065,8 @@ class TransactionsTab(tk.Frame):
         import os
         
         # Mở mặc định tại thư mục exports
-        project_root = os.path.dirname(os.path.abspath(__file__))
-        exports_dir = os.path.join(project_root, "exports")
+        from db_manager import DATA_DIR
+        exports_dir = os.path.join(DATA_DIR, "exports")
         
         filepath = filedialog.askopenfilename(
             title="Chọn file dữ liệu để nhập",

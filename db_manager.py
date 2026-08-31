@@ -5,18 +5,78 @@ Quản lý cơ sở dữ liệu giao dịch dưới dạng JSON và tính toán 
 
 import json
 import os
+import shutil
 import sys
 
-# Base directory for data files.
-# When chạy ở chế độ PyInstaller một file, dùng thư mục chứa exe để lưu dữ liệu vì _MEIPASS chỉ là thư mục tạm và không phù hợp ghi file.
+APP_NAME = "spreadProfit"
+
+# BASE_DIR   : thư mục chứa file exe (khi đã đóng gói) hoặc thư mục mã nguồn.
+# BUNDLE_DIR : thư mục tạm _MEIPASS chứa dữ liệu mẫu được nhúng sẵn trong exe.
 if getattr(sys, "frozen", False):
     BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
+    BUNDLE_DIR = getattr(sys, "_MEIPASS", BASE_DIR)
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    BUNDLE_DIR = BASE_DIR
 
-DB_FILE = os.path.join(BASE_DIR, "gold_transactions.json")
-PRICES_FILE = os.path.join(BASE_DIR, "market_prices.json")
-CUSTOM_ASSETS_FILE = os.path.join(BASE_DIR, "custom_assets.json")
+DATA_FILE_NAMES = ("gold_transactions.json", "market_prices.json", "custom_assets.json")
+
+
+def _is_writable(path):
+    """Kiểm tra thư mục có ghi được không (ví dụ Program Files thì không)."""
+    try:
+        os.makedirs(path, exist_ok=True)
+        probe = os.path.join(path, ".write_test")
+        with open(probe, "w", encoding="utf-8") as f:
+            f.write("")
+        os.remove(probe)
+        return True
+    except Exception:
+        return False
+
+
+def _resolve_data_dir():
+    """
+    Chọn nơi lưu dữ liệu theo thứ tự ưu tiên:
+      1. Thư mục 'data' nằm cạnh file exe  -> chạy kiểu portable, copy sang máy khác là xong.
+      2. %APPDATA%/spreadProfit           -> dự phòng khi thư mục exe không ghi được.
+    """
+    portable = os.path.join(BASE_DIR, "data")
+    if _is_writable(portable):
+        return portable
+    fallback = os.path.join(os.environ.get("APPDATA") or os.path.expanduser("~"), APP_NAME)
+    os.makedirs(fallback, exist_ok=True)
+    return fallback
+
+
+DATA_DIR = _resolve_data_dir()
+
+
+def _seed_data_files():
+    """
+    Lần chạy đầu tiên trên máy mới: khôi phục dữ liệu từ bản nhúng trong exe,
+    hoặc từ file JSON cũ nằm cạnh exe/mã nguồn (tương thích ngược phiên bản trước).
+    """
+    for name in DATA_FILE_NAMES:
+        target = os.path.join(DATA_DIR, name)
+        if os.path.exists(target):
+            continue
+        for source in (os.path.join(BASE_DIR, name), os.path.join(BUNDLE_DIR, "_seed", name)):
+            if os.path.abspath(source) == os.path.abspath(target):
+                continue
+            if os.path.exists(source):
+                try:
+                    shutil.copyfile(source, target)
+                except Exception:
+                    pass
+                break
+
+
+_seed_data_files()
+
+DB_FILE = os.path.join(DATA_DIR, "gold_transactions.json")
+PRICES_FILE = os.path.join(DATA_DIR, "market_prices.json")
+CUSTOM_ASSETS_FILE = os.path.join(DATA_DIR, "custom_assets.json")
 
 
 def load_db():
@@ -189,8 +249,6 @@ def calculate_portfolio(transactions, current_prices):
     return active_holdings, summary
 
 
-PRICES_FILE = "market_prices.json"
-
 def load_market_prices():
     """Tải giá thị trường thủ công theo Nhóm (Vàng/Bạc) từ file JSON."""
     if os.path.exists(PRICES_FILE):
@@ -215,8 +273,6 @@ def save_market_prices(prices):
     with open(PRICES_FILE, "w", encoding="utf-8") as f:
         json.dump(prices, f, ensure_ascii=False, indent=2)
 
-
-CUSTOM_ASSETS_FILE = "custom_assets.json"
 
 def load_custom_assets():
     """Tải danh sách tài sản tùy chọn của người dùng."""

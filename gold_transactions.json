@@ -154,5 +154,17 @@
     "unit_price": 14600000.0,
     "total": 58400000.0,
     "note": ""
+  },
+  {
+    "id": 14,
+    "date": "2026-08-02",
+    "category": "Vàng",
+    "asset": "Đồng xu hoa sen 1 chỉ",
+    "action": "Mua",
+    "quantity": 1.0,
+    "unit": "Chỉ",
+    "unit_price": 14120000.0,
+    "total": 14120000.0,
+    "note": ""
   }
 ]
