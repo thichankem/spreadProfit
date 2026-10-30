@@ -11,7 +11,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from typing import Any, Dict
 
-from config import (
+from spreadprofit.config import (
     ASSET_CATEGORIES,
     CLR_BG,
     CLR_BORDER,
@@ -28,7 +28,7 @@ from config import (
     normalize_category,
     normalize_unit,
 )
-from db_manager import calculate_portfolio, save_market_prices
+from spreadprofit.db import calculate_portfolio, save_market_prices
 
 
 class PortfolioTab(tk.Frame):

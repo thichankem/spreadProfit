@@ -14,8 +14,8 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from typing import Any, Optional
 
-import cloud_backup
-from config import (
+from spreadprofit import cloud
+from spreadprofit.config import (
     CLR_BG,
     CLR_BORDER,
     CLR_ENTRY,
@@ -26,19 +26,34 @@ from config import (
     CLR_TEXT_MUTED,
     FONT_BOLD,
 )
-from db_manager import load_db, load_market_prices
-from ui_charts import ChartsTab
-from ui_portfolio import PortfolioTab
-from ui_transactions import TransactionsTab
+from spreadprofit.db import load_db, load_market_prices
+from .charts import ChartsTab
+from .portfolio import PortfolioTab
+from .transactions import TransactionsTab
 
 
 def resource_path(relative_path: str) -> str:
     """Resolve absolute path to an embedded resource (for PyInstaller and script runs)."""
     if getattr(sys, "frozen", False):
-        base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(sys.executable)))
+        base_dir = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(sys.executable)))
+        candidates = [
+            os.path.join(base_dir, relative_path),
+            os.path.join(base_dir, "assets", relative_path),
+            os.path.join(base_dir, "docs", "assets", relative_path),
+        ]
     else:
-        base_path = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(base_path, relative_path)
+        ui_dir = os.path.dirname(os.path.abspath(__file__))
+        root_dir = os.path.dirname(os.path.dirname(ui_dir))
+        candidates = [
+            os.path.join(root_dir, "assets", relative_path),
+            os.path.join(root_dir, "docs", "assets", relative_path),
+            os.path.join(root_dir, relative_path),
+            os.path.join(ui_dir, relative_path),
+        ]
+    for c in candidates:
+        if os.path.exists(c):
+            return c
+    return candidates[0]
 
 
 class SpreadProfitApp(tk.Tk):
@@ -315,8 +330,8 @@ class SpreadProfitApp(tk.Tk):
     def trigger_cloud_backup(self) -> None:
         """Create a complete local snapshot and attempt Google Cloud Storage synchronization."""
         self.var_status.set("Creating local snapshot and syncing with Cloud...")
-        meta = cloud_backup.create_local_snapshot()
-        gcs_ok, gcs_msg = cloud_backup.upload_to_google_cloud()
+        meta = cloud.create_local_snapshot()
+        gcs_ok, gcs_msg = cloud.upload_to_google_cloud()
 
         if gcs_ok:
             self.var_status.set("Backup uploaded to Google Cloud Storage successfully.")
@@ -337,7 +352,24 @@ class SpreadProfitApp(tk.Tk):
             )
 
 
+def main() -> int:
+    """Application entry point with Windows High-DPI scaling."""
+    if sys.platform.startswith("win"):
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        except Exception:
+            try:
+                ctypes.windll.user32.SetProcessDPIAware()
+            except Exception:
+                pass
+
+    app = SpreadProfitApp()
+    app.mainloop()
+    return 0
+
+
 # Backward compatibility alias
+MainApplication = SpreadProfitApp
 GoldTrackerApp = SpreadProfitApp
 
 if __name__ == "__main__":

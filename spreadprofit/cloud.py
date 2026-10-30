@@ -19,7 +19,17 @@ from typing import Any, Dict, List, Optional, Tuple
 
 def get_default_data_dir() -> str:
     """Return the data directory path relative to project or execution root."""
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    if getattr(sys, "frozen", False):
+        base_dir = os.path.dirname(os.path.abspath(sys.executable))
+    else:
+        pkg_dir = os.path.dirname(os.path.abspath(__file__))
+        parent = os.path.dirname(pkg_dir)
+        if os.path.exists(os.path.join(parent, "data")):
+            base_dir = parent
+        elif os.path.exists(os.path.join(pkg_dir, "data")):
+            base_dir = pkg_dir
+        else:
+            base_dir = parent
     data_dir = os.path.join(base_dir, "data")
     if os.path.exists(data_dir):
         return data_dir
@@ -191,6 +201,10 @@ def upload_to_google_cloud(
         f"GCS upload failed.\nCLI output: {stderr or stderr_gs}\n"
         "Ensure active GCP credentials and billing on the owning project.",
     )
+
+
+# Alias for unified sync API
+sync_portfolio_to_cloud = upload_to_google_cloud
 
 
 def list_local_backups() -> List[Dict[str, Any]]:

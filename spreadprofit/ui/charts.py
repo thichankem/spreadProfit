@@ -21,7 +21,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import numpy as np
 
-from config import (
+from spreadprofit.config import (
     ASSET_CATEGORIES,
     CLR_BG,
     CLR_BORDER,
@@ -39,7 +39,7 @@ from config import (
     normalize_category,
     normalize_unit,
 )
-from db_manager import calculate_portfolio
+from spreadprofit.db import calculate_portfolio
 
 
 def truncate_label(name: str, max_length: int = 18) -> str:

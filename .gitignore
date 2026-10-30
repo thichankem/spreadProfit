@@ -8,7 +8,7 @@ build/
 dist/
 _seed/
 *.spec
-!app.spec
+!scripts/app.spec
 
 # Virtual Environments
 .venv/

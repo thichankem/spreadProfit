@@ -17,7 +17,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
 from typing import Any, Callable, Dict, List, Optional
 
-from config import (
+from spreadprofit.config import (
     ASSET_CATEGORIES,
     CLR_BG,
     CLR_BORDER,
@@ -37,7 +37,7 @@ from config import (
     normalize_category,
     normalize_unit,
 )
-from db_manager import DATA_DIR, load_custom_assets, next_id, save_custom_assets, save_db
+from spreadprofit.db import DATA_DIR, load_custom_assets, next_id, save_custom_assets, save_db
 
 
 class CalendarDialog(tk.Toplevel):

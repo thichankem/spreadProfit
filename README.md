@@ -60,7 +60,7 @@ Most retail investors who accumulate physical gold, silver, or precious assets f
 ### Privacy & Cloud Synchronization
 * **100% Local Offline Storage**: Stored as clean JSON in `data/` adjacent to the binary or `%APPDATA%/spreadProfit`.
 * **Atomic Writes**: Uses temporary swap writes to guarantee zero database corruption during unexpected power outages.
-* **Google Cloud Storage (GCS) Sync**: Integrated `cloud_backup.py` module creates timestamped snapshots and uploads to your private Google Cloud Storage bucket.
+* **Google Cloud Storage (GCS) Sync**: Integrated `spreadprofit/cloud.py` module creates timestamped snapshots and uploads to your private Google Cloud Storage bucket.
 * **Multi-Format Portability**: Full support for importing and exporting portfolio records to **Microsoft Excel (`.xlsx`)**, **CSV**, and **JSON**.
 
 ---
@@ -70,19 +70,19 @@ Most retail investors who accumulate physical gold, silver, or precious assets f
 ```mermaid
 flowchart TD
     subgraph UI ["Desktop User Interface (Tkinter Clam Dark Theme)"]
-        A["SpreadProfitApp (ui_main.py)"]
-        T1["PortfolioTab (ui_portfolio.py)"]
-        T2["TransactionsTab (ui_transactions.py)"]
-        T3["ChartsTab (ui_charts.py)"]
+        A["SpreadProfitApp (spreadprofit/ui/main.py)"]
+        T1["PortfolioTab (spreadprofit/ui/portfolio.py)"]
+        T2["TransactionsTab (spreadprofit/ui/transactions.py)"]
+        T3["ChartsTab (spreadprofit/ui/charts.py)"]
         A --> T1
         A --> T2
         A --> T3
     end
 
     subgraph Core ["Calculation & Persistence Engine"]
-        DB["Database Manager (db_manager.py)"]
-        CFG["Config & Unit Factors (config.py)"]
-        BK["Cloud & Local Backup (cloud_backup.py)"]
+        DB["Database Manager (spreadprofit/db.py)"]
+        CFG["Config & Unit Factors (spreadprofit/config.py)"]
+        BK["Cloud & Local Backup (spreadprofit/cloud.py)"]
     end
 
     subgraph Storage ["Physical Data Storage"]
@@ -140,7 +140,7 @@ python app.py
 
 ## Google Cloud Storage Backup
 
-SpreadProfit includes native snapshot generation and Google Cloud Storage (GCS) synchronization via `cloud_backup.py`.
+SpreadProfit includes native snapshot generation and Google Cloud Storage (GCS) synchronization via `spreadprofit/cloud.py`.
 
 ### 1. Configure Your Google Cloud Bucket
 You can specify your GCS bucket using an environment variable or via `data/cloud_config.json`:
@@ -168,7 +168,7 @@ gcloud auth application-default login
 * **From the GUI**: Click the **`Cloud Backup`** button in the top navigation bar.
 * **From the Terminal / CLI**:
   ```bash
-  python cloud_backup.py
+  python -m spreadprofit.cloud
   ```
 
 Every backup creates:
@@ -185,7 +185,7 @@ To compile a standalone, single-file Windows executable (`SpreadProfit.exe`) tha
 
 ```bash
 pip install pyinstaller
-python build_exe.py
+python scripts/build.py
 ```
 
 ### Build Artifacts
@@ -210,30 +210,38 @@ python -m unittest discover -s tests -p "test_*.py"
 
 ```
 spreadProfit/
-├── app.py                      # Application launcher with High-DPI initialization
-├── app.spec                    # PyInstaller bundle specification
-├── app_icon.ico                # Windows application icon
-├── app_icon.png                # Multi-platform PNG application icon
-├── build_exe.py                # Standalone binary compiler script
-├── cloud_backup.py             # Google Cloud Storage & local snapshot service
-├── config.py                   # Typography, theme palette, and unit factors
-├── db_manager.py               # JSON database manager and MAC portfolio engine
-├── LICENSE                     # MIT Open-Source License
-├── README.md                   # Project documentation and visual guides
-├── requirements.txt            # Production runtime dependencies
-├── ui_charts.py                # Matplotlib visual analytics tab
-├── ui_main.py                  # Tkinter root window and theme manager
-├── ui_portfolio.py             # Portfolio KPI cards and what-if simulator
-├── ui_transactions.py          # Transaction entry, calendar, and data I/O
-├── data/                       # Local persistent database directory
-│   ├── custom_assets.json      # User-defined assets
-│   ├── gold_transactions.json  # Transaction ledger
-│   └── market_prices.json      # Benchmark spot market prices
+├── app.py                              # Application entry point (High-DPI aware)
+├── LICENSE                             # MIT Open-Source License
+├── README.md                           # Project documentation and visual guides
+├── requirements.txt                    # Runtime dependencies
+├── assets/                             # Application media assets
+│   ├── app_icon.ico                    # Windows taskbar & title-bar icon
+│   ├── app_icon.png                    # Multi-platform PNG icon
+│   └── banner_animated.svg             # Animated SVG banner for GitHub README
+├── data/                               # Local persistent storage (auto-created)
+│   ├── custom_assets.json              # User-defined asset presets
+│   ├── gold_transactions.json          # Transaction ledger
+│   └── market_prices.json              # Benchmark spot market prices
 ├── docs/
 │   └── assets/
-│       └── banner_animated.svg # Interactive animated SVG banner
+│       └── banner_animated.svg         # Source banner for GitHub rendering
+├── scripts/                            # Build tooling
+│   ├── app.spec                        # PyInstaller packaging specification
+│   └── build.py                        # Standalone binary compiler
+├── spreadprofit/                       # Core Python package
+│   ├── __init__.py                     # Public API surface
+│   ├── __main__.py                     # Enables: python -m spreadprofit
+│   ├── config.py                       # Theme palette, typography, unit factors
+│   ├── db.py                           # JSON database & MAC portfolio engine
+│   ├── cloud.py                        # GCS upload & local snapshot service
+│   └── ui/                             # Tkinter user interface layer
+│       ├── __init__.py
+│       ├── main.py                     # Root window, tabs, and style orchestration
+│       ├── portfolio.py                # Portfolio KPI cards & what-if simulator
+│       ├── transactions.py             # Transaction entry, calendar, and data I/O
+│       └── charts.py                   # Matplotlib visual analytics (5 subplots)
 └── tests/
-    └── test_portfolio.py       # Automated test suite
+    └── test_portfolio.py               # Automated unit test suite (8 tests)
 ```
 
 ---

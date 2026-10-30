@@ -7,7 +7,7 @@ Compiles the standalone Windows executable and produces a portable distribution 
     dist/SpreadProfit_portable.zip    -> Compressed distribution archive for distribution
 
 Usage:
-    python build_exe.py
+    python scripts/build.py
 """
 
 from __future__ import annotations
@@ -23,10 +23,12 @@ try:
 except Exception:
     pass
 
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 SEED_DIR = os.path.join(ROOT_DIR, "_seed")
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 DIST_DIR = os.path.join(ROOT_DIR, "dist")
+SPEC_PATH = os.path.join(SCRIPT_DIR, "app.spec")
 PORTABLE_DIR = os.path.join(DIST_DIR, "SpreadProfit_portable")
 EXE_NAME = "SpreadProfit.exe"
 TRACKED_FILES = ("gold_transactions.json", "market_prices.json", "custom_assets.json")
@@ -57,15 +59,10 @@ def collect_seed_data() -> None:
     """Consolidate current database files to embed inside the standalone binary."""
     os.makedirs(SEED_DIR, exist_ok=True)
     for fname in TRACKED_FILES:
-        source_candidates = (
-            os.path.join(DATA_DIR, fname),
-            os.path.join(ROOT_DIR, fname),
-        )
-        for src in source_candidates:
-            if os.path.exists(src):
-                shutil.copyfile(src, os.path.join(SEED_DIR, fname))
-                print(f"  + Embedding seed file: {os.path.relpath(src, ROOT_DIR)}")
-                break
+        src = os.path.join(DATA_DIR, fname)
+        if os.path.exists(src):
+            shutil.copyfile(src, os.path.join(SEED_DIR, fname))
+            print(f"  + Embedding seed file: {fname}")
         else:
             with open(os.path.join(SEED_DIR, fname), "w", encoding="utf-8") as f:
                 f.write("[]" if fname == "gold_transactions.json" else "{}")
@@ -76,7 +73,7 @@ def run_pyinstaller() -> None:
     """Invoke PyInstaller build with clean caches."""
     print("\n[2/4] Invoking PyInstaller build process...")
     subprocess.check_call(
-        [sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "app.spec"],
+        [sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", SPEC_PATH],
         cwd=ROOT_DIR,
     )
 

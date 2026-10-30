@@ -13,9 +13,16 @@ import tempfile
 import unittest
 from typing import Any, Dict, List
 
-import cloud_backup
-from config import get_unit_factor, normalize_action, normalize_category, normalize_unit
-from db_manager import calculate_portfolio, next_id
+from spreadprofit import cloud
+from spreadprofit.config import (
+    DEFAULT_ASSETS,
+    get_unit_factor,
+    normalize_action,
+    normalize_category,
+    normalize_unit,
+)
+from spreadprofit.db import calculate_portfolio, next_id
+from spreadprofit.ui.main import SpreadProfitApp
 
 
 class TestPortfolioCalculations(unittest.TestCase):
@@ -50,8 +57,6 @@ class TestPortfolioCalculations(unittest.TestCase):
 
     def test_default_seed_assets_english(self) -> None:
         """Verify default asset models are 100% standard English."""
-        from config import DEFAULT_ASSETS
-
         self.assertGreater(len(DEFAULT_ASSETS), 0)
         valid_categories = {"Gold", "Silver"}
         valid_units = {"Tael", "Chi", "Ounce", "Gram"}
@@ -154,7 +159,7 @@ class TestCloudAndLocalBackup(unittest.TestCase):
 
     def test_create_snapshot_and_archive(self) -> None:
         """Verify snapshot JSON and ZIP archive generation."""
-        meta = cloud_backup.create_local_snapshot(target_dir=self.test_dir)
+        meta = cloud.create_local_snapshot(target_dir=self.test_dir)
         self.assertEqual(meta["status"], "success")
         self.assertTrue(os.path.exists(meta["snapshot_path"]))
         self.assertTrue(os.path.exists(meta["archive_path"]))
@@ -167,8 +172,6 @@ class TestAppUIInitialization(unittest.TestCase):
 
     def test_app_startup_and_view_refresh(self) -> None:
         """Initialize SpreadProfitApp and ensure tabs refresh without exception."""
-        from ui_main import SpreadProfitApp
-
         app = SpreadProfitApp()
         try:
             app.tab_transactions.refresh_table()

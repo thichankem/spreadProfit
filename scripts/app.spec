@@ -6,23 +6,39 @@ Bundles Python bytecode, icons, and seed database files into a self-contained
 single-file Windows executable (SpreadProfit.exe).
 """
 
+import os
+
+ROOT_DIR = os.path.abspath(SPECPATH)
+if os.path.basename(ROOT_DIR) == "scripts":
+    ROOT_DIR = os.path.dirname(ROOT_DIR)
+
 datas = [
-    ('app_icon.ico', '.'),
-    ('app_icon.png', '.'),
-    ('_seed/gold_transactions.json', '_seed'),
-    ('_seed/market_prices.json', '_seed'),
-    ('_seed/custom_assets.json', '_seed'),
+    (os.path.join(ROOT_DIR, 'assets', 'app_icon.ico'), 'assets'),
+    (os.path.join(ROOT_DIR, 'assets', 'app_icon.png'), 'assets'),
+    (os.path.join(ROOT_DIR, '_seed', 'gold_transactions.json'), '_seed'),
+    (os.path.join(ROOT_DIR, '_seed', 'market_prices.json'), '_seed'),
+    (os.path.join(ROOT_DIR, '_seed', 'custom_assets.json'), '_seed'),
 ]
 
+icon_path = os.path.join(ROOT_DIR, 'assets', 'app_icon.ico')
+
 a = Analysis(
-    ['app.py'],
-    pathex=[],
+    [os.path.join(ROOT_DIR, 'app.py')],
+    pathex=[ROOT_DIR],
     binaries=[],
     datas=datas,
     hiddenimports=[
         'openpyxl',
         'matplotlib.backends.backend_tkagg',
-        'cloud_backup',
+        'spreadprofit',
+        'spreadprofit.config',
+        'spreadprofit.db',
+        'spreadprofit.cloud',
+        'spreadprofit.ui',
+        'spreadprofit.ui.main',
+        'spreadprofit.ui.portfolio',
+        'spreadprofit.ui.transactions',
+        'spreadprofit.ui.charts',
     ],
     hookspath=[],
     hooksconfig={},
@@ -46,7 +62,7 @@ exe = EXE(
     a.datas,
     [],
     name='SpreadProfit',
-    icon='app_icon.ico',
+    icon=icon_path,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

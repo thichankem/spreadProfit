@@ -1,0 +1,251 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" width="100%" height="100%">
+  <defs>
+    <!-- Background Canvas Gradient -->
+    <linearGradient id="canvasBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080c14" />
+      <stop offset="50%" stop-color="#0e1726" />
+      <stop offset="100%" stop-color="#060910" />
+    </linearGradient>
+
+    <!-- Top Rim Glass Highlight -->
+    <linearGradient id="topRim" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e293b" stop-opacity="0.1" />
+      <stop offset="25%" stop-color="#f59e0b" stop-opacity="0.6" />
+      <stop offset="75%" stop-color="#10b981" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#1e293b" stop-opacity="0.1" />
+    </linearGradient>
+
+    <!-- Gold Brand Gradient -->
+    <linearGradient id="goldBrandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="60%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#eab308" />
+    </linearGradient>
+
+    <!-- Chart Area Fill Gradient -->
+    <linearGradient id="chartAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0.0" />
+    </linearGradient>
+
+    <!-- Chart Line Stroke Gradient -->
+    <linearGradient id="chartLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#60a5fa" />
+      <stop offset="50%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+
+    <!-- Bullion Ingot Geometry Fills -->
+    <linearGradient id="ingotTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+
+    <!-- Subtle Ambient Blur Filter -->
+    <filter id="ambientBlur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="60" result="blur" />
+    </filter>
+
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <!-- Clean CSS Animations -->
+    <style>
+      .beacon {
+        animation: beaconPulse 2s ease-in-out infinite;
+      }
+      @keyframes beaconPulse {
+        0%, 100% { r: 4; opacity: 1; }
+        50% { r: 6; opacity: 0.7; }
+      }
+      .beacon-ring {
+        animation: ringPulse 2.4s ease-out infinite;
+      }
+      @keyframes ringPulse {
+        0% { r: 4; opacity: 0.8; stroke-width: 1.5; }
+        100% { r: 13; opacity: 0; stroke-width: 0.5; }
+      }
+      .bar-rise-1 { animation: barRise1 3.2s ease-in-out infinite alternate; }
+      .bar-rise-2 { animation: barRise2 3.2s ease-in-out infinite alternate; }
+      .bar-rise-3 { animation: barRise3 3.2s ease-in-out infinite alternate; }
+      @keyframes barRise1 { 0% { height: 16px; y: 206px; } 100% { height: 32px; y: 190px; } }
+      @keyframes barRise2 { 0% { height: 26px; y: 196px; } 100% { height: 48px; y: 174px; } }
+      @keyframes barRise3 { 0% { height: 20px; y: 202px; } 100% { height: 40px; y: 182px; } }
+    </style>
+  </defs>
+
+  <!-- Container Surface -->
+  <rect width="960" height="340" rx="16" fill="url(#canvasBg)" />
+
+  <!-- Ambient Background Lighting -->
+  <circle cx="150" cy="80" r="120" fill="#f59e0b" opacity="0.08" filter="url(#ambientBlur)" />
+  <circle cx="820" cy="170" r="140" fill="#10b981" opacity="0.10" filter="url(#ambientBlur)" />
+
+  <!-- Outer Glass Border -->
+  <rect x="1" y="1" width="958" height="338" rx="15" fill="none" stroke="#1e293b" stroke-width="1.2" />
+  <path d="M 40 1.2 L 920 1.2" stroke="url(#topRim)" stroke-width="2" stroke-linecap="round" />
+
+  <!-- Subtle Blueprint Grid -->
+  <g opacity="0.035" stroke="#ffffff" stroke-width="1">
+    <line x1="0" y1="85" x2="960" y2="85" />
+    <line x1="0" y1="170" x2="960" y2="170" />
+    <line x1="0" y1="255" x2="960" y2="255" />
+    <line x1="160" y1="0" x2="160" y2="340" />
+    <line x1="320" y1="0" x2="320" y2="340" />
+    <line x1="480" y1="0" x2="480" y2="340" />
+    <line x1="640" y1="0" x2="640" y2="340" />
+    <line x1="800" y1="0" x2="800" y2="340" />
+  </g>
+
+  <!-- ==================== HEADER (Clean Geometric Mark, No Version Badge) ==================== -->
+  <g transform="translate(48, 36)">
+    <!-- Minimalist Bullion Logo Mark -->
+    <rect width="46" height="46" rx="11" fill="#111c2e" stroke="#22334a" stroke-width="1.2" />
+    <!-- Handcrafted Geometric Bullion Bars -->
+    <!-- Base Bar 1 -->
+    <polygon points="10,32 24,32 29,28 15,28" fill="#b45309" />
+    <polygon points="10,32 10,35 24,35 24,32" fill="#78350f" />
+    <!-- Base Bar 2 -->
+    <polygon points="21,32 35,32 40,28 26,28" fill="#d97706" />
+    <polygon points="21,32 21,35 35,35 35,32" fill="#92400e" />
+    <!-- Top Bar (Pure Bullion 999.9) -->
+    <polygon points="15,24 29,24 35,19 21,19" fill="url(#ingotTop)" />
+    <polygon points="15,24 15,27 29,27 29,24" fill="#f59e0b" />
+    <polygon points="29,24 29,27 35,22 35,19" fill="#b45309" />
+
+    <!-- Typography -->
+    <text x="62" y="24" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="800" letter-spacing="0.5">
+      <tspan fill="#f8fafc">SPREAD</tspan><tspan fill="url(#goldBrandGrad)">PROFIT</tspan>
+    </text>
+
+    <!-- Subtitle (International Fintech Positioning) -->
+    <text x="62" y="43" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="500" fill="#94a3b8">
+      Physical Precious Metals Portfolio Tracker | Moving Weighted Average Cost (MAC) Engine
+    </text>
+  </g>
+
+  <!-- ==================== METRIC CARDS (International Standards: USD & Ounces) ==================== -->
+  <!-- Card 1: Total Invested Capital (x=48, w=200) -->
+  <g transform="translate(48, 112)">
+    <rect width="200" height="106" rx="12" fill="#0f172a" stroke="#1e293b" stroke-width="1.2" />
+    <!-- Coin Stack Icon -->
+    <rect x="14" y="14" width="24" height="24" rx="6" fill="#1e293b" />
+    <ellipse cx="26" cy="21" rx="6" ry="2.2" fill="none" stroke="#94a3b8" stroke-width="1.2" />
+    <path d="M 20 21 L 20 25 C 20 26.2, 26 27.2, 26 27.2 C 26 27.2, 32 26.2, 32 25 L 32 21" fill="none" stroke="#94a3b8" stroke-width="1.2" />
+    <path d="M 20 25 L 20 29 C 20 30.2, 26 31.2, 26 31.2 C 26 31.2, 32 30.2, 32 29 L 32 25" fill="none" stroke="#94a3b8" stroke-width="1.2" />
+    <text x="46" y="30" font-family="'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#64748b" letter-spacing="0.6">TOTAL CAPITAL</text>
+    <text x="16" y="65" font-family="'Segoe UI', sans-serif" font-size="20" font-weight="800" fill="#f8fafc">
+      $42,850<tspan font-size="12" font-weight="600" fill="#94a3b8">.00</tspan>
+    </text>
+    <text x="16" y="90" font-family="'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#64748b">16.5 oz Au • 250 oz Ag</text>
+  </g>
+
+  <!-- Card 2: Current Valuation (x=264, w=200) -->
+  <g transform="translate(264, 112)">
+    <rect width="200" height="106" rx="12" fill="#0f172a" stroke="#1e293b" stroke-width="1.2" />
+    <!-- Ingot Icon -->
+    <rect x="14" y="14" width="24" height="24" rx="6" fill="#31200b" />
+    <polygon points="19,29 29,29 32,23 22,23" fill="#fbbf24" />
+    <polygon points="19,29 19,31 29,31 29,29" fill="#d97706" />
+    <text x="46" y="30" font-family="'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#d97706" letter-spacing="0.6">MARKET VALUE</text>
+    <text x="16" y="65" font-family="'Segoe UI', sans-serif" font-size="20" font-weight="800" fill="#fbbf24">
+      $51,480<tspan font-size="12" font-weight="600" fill="#d97706">.00</tspan>
+    </text>
+    <text x="16" y="90" font-family="'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#94a3b8">Spot Benchmark Quote</text>
+  </g>
+
+  <!-- Card 3: Unrealized Net PnL (x=480, w=200) -->
+  <g transform="translate(480, 112)">
+    <rect width="200" height="106" rx="12" fill="#061a14" stroke="#059669" stroke-width="1.5" />
+    <!-- Trend Arrow Icon -->
+    <rect x="14" y="14" width="24" height="24" rx="6" fill="#064e3b" />
+    <path d="M 19 28 L 24 22 L 27 25 L 32 20 M 29 20 L 32 20 L 32 23" stroke="#34d399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <text x="46" y="30" font-family="'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#34d399" letter-spacing="0.6">UNREALIZED GAIN</text>
+    <text x="16" y="65" font-family="'Segoe UI', sans-serif" font-size="20" font-weight="800" fill="#34d399">
+      +$8,630<tspan font-size="12" font-weight="600" fill="#10b981">.00</tspan>
+    </text>
+    <!-- ROI Pill Badge -->
+    <g transform="translate(16, 76)">
+      <rect width="102" height="18" rx="9" fill="#022c22" stroke="#047857" stroke-width="1" />
+      <text x="10" y="13" font-family="'Segoe UI', sans-serif" font-size="10.5" font-weight="700" fill="#6ee7b7">+20.14% ROI</text>
+    </g>
+  </g>
+
+  <!-- Card 4: Performance Trajectory (x=696, w=216, ends at 912) -->
+  <g transform="translate(696, 112)">
+    <rect width="216" height="106" rx="12" fill="#0f172a" stroke="#1e293b" stroke-width="1.2" />
+    
+    <!-- Header -->
+    <text x="16" y="26" font-family="'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#818cf8" letter-spacing="0.6">GROWTH TREND</text>
+    <g transform="translate(138, 14)">
+      <rect width="62" height="16" rx="8" fill="#064e3b" />
+      <circle cx="8" cy="8" r="2.5" fill="#34d399" />
+      <text x="15" y="11.5" font-family="'Segoe UI', sans-serif" font-size="8.5" font-weight="700" fill="#34d399">BULLISH</text>
+    </g>
+
+    <!-- Inflow Activity Volume Bars -->
+    <rect class="bar-rise-1" x="16" y="188" width="7" height="34" rx="2" fill="#334155" transform="translate(0, -135)" />
+    <rect class="bar-rise-2" x="27" y="172" width="7" height="50" rx="2" fill="#f59e0b" transform="translate(0, -135)" />
+    <rect class="bar-rise-3" x="38" y="180" width="7" height="42" rx="2" fill="#10b981" transform="translate(0, -135)" />
+
+    <!-- Performance Spline Chart -->
+    <g transform="translate(54, 20)">
+      <!-- Gradient Fill Area -->
+      <path d="M 6 60 Q 40 52, 75 40 T 115 22 T 146 10 L 146 66 L 6 66 Z" fill="url(#chartAreaGrad)" />
+      <!-- Baseline Cost Reference -->
+      <line x1="6" y1="46" x2="146" y2="46" stroke="#334155" stroke-dasharray="3,3" stroke-width="1" />
+      <text x="8" y="42" font-family="'Segoe UI', sans-serif" font-size="7.5" font-weight="600" fill="#64748b">Cost Basis</text>
+      <!-- Complete Smooth Trend Curve -->
+      <path d="M 6 60 Q 40 52, 75 40 T 115 22 T 146 10" fill="none" stroke="url(#chartLineGrad)" stroke-width="2.2" stroke-linecap="round" />
+      <!-- Peak Dot & Beacon Ring -->
+      <circle class="beacon-ring" cx="146" cy="10" r="4" fill="none" stroke="#34d399" />
+      <circle class="beacon" cx="146" cy="10" r="4" fill="#34d399" filter="url(#softGlow)" />
+    </g>
+  </g>
+
+  <!-- ==================== FEATURE BADGES (Standard Units: Ounce & Gram) ==================== -->
+  <g transform="translate(48, 248)">
+    <!-- Badge 1: Offline -->
+    <g transform="translate(0, 0)">
+      <rect width="204" height="34" rx="17" fill="#111827" stroke="#1e293b" stroke-width="1.2" />
+      <!-- Shield Vector Icon -->
+      <path d="M 22 10 L 15 13.5 L 15 19 C 15 23.5 18.5 26.5 22 28 C 25.5 26.5 29 23.5 29 19 L 29 13.5 Z" fill="none" stroke="#f59e0b" stroke-width="1.4" stroke-linejoin="round" />
+      <path d="M 19 19 L 21 21 L 25 17" stroke="#f59e0b" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="36" y="21" font-family="'Segoe UI', sans-serif" font-size="11" font-weight="600" fill="#cbd5e1">100% Private &amp; Offline</text>
+    </g>
+
+    <!-- Badge 2: Moving Average Basis -->
+    <g transform="translate(220, 0)">
+      <rect width="204" height="34" rx="17" fill="#111827" stroke="#1e293b" stroke-width="1.2" />
+      <!-- Calculator / Formula Icon -->
+      <rect x="15" y="10" width="14" height="17" rx="3" fill="none" stroke="#10b981" stroke-width="1.4" />
+      <line x1="18" y1="14" x2="26" y2="14" stroke="#10b981" stroke-width="1.2" />
+      <circle cx="19" cy="18" r="1" fill="#10b981" />
+      <circle cx="25" cy="18" r="1" fill="#10b981" />
+      <circle cx="19" cy="22" r="1" fill="#10b981" />
+      <circle cx="25" cy="22" r="1" fill="#10b981" />
+      <text x="36" y="21" font-family="'Segoe UI', sans-serif" font-size="11" font-weight="600" fill="#cbd5e1">Weighted Avg Cost (MAC)</text>
+    </g>
+
+    <!-- Badge 3: Bullion Units (International Ounce & Gram) -->
+    <g transform="translate(440, 0)">
+      <rect width="204" height="34" rx="17" fill="#111827" stroke="#1e293b" stroke-width="1.2" />
+      <!-- Balance Scale Icon -->
+      <path d="M 22 10 L 22 26 M 15 14 L 29 14" stroke="#818cf8" stroke-width="1.4" stroke-linecap="round" />
+      <path d="M 13 21 C 13 21 15 14 15 14 C 15 14 17 21 17 21 Z M 27 21 C 27 21 29 14 29 14 C 29 14 31 21 31 21 Z" fill="none" stroke="#818cf8" stroke-width="1.2" />
+      <text x="36" y="21" font-family="'Segoe UI', sans-serif" font-size="11" font-weight="600" fill="#cbd5e1">Troy Ounce (oz) • Gram (g)</text>
+    </g>
+
+    <!-- Badge 4: Google Cloud Sync -->
+    <g transform="translate(660, 0)">
+      <rect width="204" height="34" rx="17" fill="#111827" stroke="#1e293b" stroke-width="1.2" />
+      <!-- Cloud Backup Icon -->
+      <path d="M 19 23 C 16.5 23 15 21 15 19 C 15 17.2 16.2 15.8 18 15.3 C 18.5 12.8 20.6 11 23 11 C 25.8 11 28 13.2 28 16 C 29.7 16.2 31 17.6 31 19.5 C 31 21.5 29.4 23 27.5 23 Z" fill="none" stroke="#38bdf8" stroke-width="1.4" />
+      <path d="M 23 16 L 23 24 M 20 21 L 23 24 L 26 21" stroke="#38bdf8" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="36" y="21" font-family="'Segoe UI', sans-serif" font-size="11" font-weight="600" fill="#cbd5e1">Google Cloud Sync</text>
+    </g>
+  </g>
+</svg>
