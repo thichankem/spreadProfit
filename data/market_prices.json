@@ -1,12 +1,12 @@
 {
   "Gold": {
-    "buy": 15050000.0,
-    "sell": 15450000.0,
-    "unit": "Chi"
+    "buy": 2750.0,
+    "sell": 2775.0,
+    "unit": "Ounce"
   },
   "Silver": {
-    "buy": 2272000.0,
-    "sell": 2395000.0,
-    "unit": "Tael"
+    "buy": 33.5,
+    "sell": 34.5,
+    "unit": "Ounce"
   }
 }
