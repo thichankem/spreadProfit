@@ -116,7 +116,7 @@ flowchart TD
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/dophuhung/spreadProfit.git
+git clone https://github.com/thichankem/spreadProfit.git
 cd spreadProfit
 ```
 
@@ -243,7 +243,7 @@ spreadProfit/
 This project is open-source and released under the terms of the [MIT License](LICENSE).
 
 ```
-Copyright (c) 2026 Do Phu Hung & spreadProfit Contributors
+Copyright (c) 2026 spreadProfit Contributors
 ```
 
 You are free to use, modify, and distribute this software for personal and commercial purposes.

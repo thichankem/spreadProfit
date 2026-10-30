@@ -117,20 +117,41 @@ def compress_distribution_zip() -> str:
     return zip_path
 
 
+def cleanup_temporary_artifacts() -> None:
+    """Remove transient seed and PyInstaller build directories."""
+    for folder in (SEED_DIR, os.path.join(ROOT_DIR, "build")):
+        if os.path.isdir(folder):
+            try:
+                shutil.rmtree(folder)
+            except Exception:
+                pass
+
+
 def main() -> None:
     print("=== spreadProfit Standalone Distribution Builder ===")
-    print("[1/4] Gathering seed database files...")
-    collect_seed_data()
-    run_pyinstaller()
-    assemble_portable_bundle()
-    zip_path = compress_distribution_zip()
+    try:
+        # Remove any legacy output artifacts from earlier versions
+        for legacy in ("QuanLyTaiSan.exe", "QuanLyTaiSan_portable.zip", "QuanLyTaiSan_portable"):
+            leg_path = os.path.join(DIST_DIR, legacy)
+            if os.path.isfile(leg_path):
+                os.remove(leg_path)
+            elif os.path.isdir(leg_path):
+                shutil.rmtree(leg_path)
 
-    exe_file = os.path.join(PORTABLE_DIR, EXE_NAME)
-    size_mb = os.path.getsize(exe_file) / (1024 * 1024)
-    print("\n=== BUILD COMPLETE ===")
-    print(f"  Binary      : {exe_file} ({size_mb:.1f} MB)")
-    print(f"  Portable Dir: {PORTABLE_DIR}")
-    print(f"  Zip Archive : {zip_path}")
+        print("[1/4] Gathering seed database files...")
+        collect_seed_data()
+        run_pyinstaller()
+        assemble_portable_bundle()
+        zip_path = compress_distribution_zip()
+
+        exe_file = os.path.join(PORTABLE_DIR, EXE_NAME)
+        size_mb = os.path.getsize(exe_file) / (1024 * 1024)
+        print("\n=== BUILD COMPLETE ===")
+        print(f"  Binary      : {exe_file} ({size_mb:.1f} MB)")
+        print(f"  Portable Dir: {PORTABLE_DIR}")
+        print(f"  Zip Archive : {zip_path}")
+    finally:
+        cleanup_temporary_artifacts()
 
 
 if __name__ == "__main__":
