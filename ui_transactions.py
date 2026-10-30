@@ -222,7 +222,7 @@ class TransactionsTab(tk.Frame):
         self.var_note = tk.StringVar()
         self.var_search = tk.StringVar()
         self.var_filter_cat = tk.StringVar(value="All")
-        self.var_total_preview = tk.StringVar(value="Estimated Total: —")
+        self.var_total_preview = tk.StringVar(value="Estimated Total: -")
         self.editing_id: Optional[int] = None
         self.last_unit: str = "Tael"
 
@@ -473,7 +473,7 @@ class TransactionsTab(tk.Frame):
         self.cb_unit.bind("<<ComboboxSelected>>", self._on_unit_selected)
 
         # 7. Unit Price
-        make_label("Unit Price (đ):", 6, 0)
+        make_label("Unit Price (VND):", 6, 0)
         price_box = tk.Frame(form_frame, bg=CLR_PANEL)
         price_box.grid(row=6, column=1, sticky="ew")
         price_box.columnconfigure(0, weight=1)
@@ -768,9 +768,9 @@ class TransactionsTab(tk.Frame):
             qty = float(self.var_qty.get())
             price = float(self.var_unit_price.get().replace(",", ""))
             total = qty * price
-            self.var_total_preview.set(f"Estimated Total: {total:,.0f} đ")
+            self.var_total_preview.set(f"Estimated Total: {total:,.0f} VND")
         except ValueError:
-            self.var_total_preview.set("Estimated Total: —")
+            self.var_total_preview.set("Estimated Total: -")
 
     def get_date(self) -> str:
         """Assemble ISO-8601 YYYY-MM-DD date string from day, month, and year inputs."""
@@ -838,7 +838,7 @@ class TransactionsTab(tk.Frame):
                 converted_price = price / ratio if ratio > 0 else price
                 self.var_unit_price.set(f"{converted_price:,.0f}")
                 self.main_app.var_status.set(
-                    f"Benchmark applied for {cat} ({action}): {converted_price:,.0f} đ / {form_unit}"
+                    f"Benchmark applied for {cat} ({action}): {converted_price:,.0f} VND / {form_unit}"
                 )
 
     def refresh_table(self) -> None:
@@ -966,7 +966,7 @@ class TransactionsTab(tk.Frame):
         self.var_qty.set("")
         self.var_unit_price.set("")
         self.var_note.set("")
-        self.var_total_preview.set("Estimated Total: —")
+        self.var_total_preview.set("Estimated Total: -")
 
         self._on_category_change()
         self.refresh_table()
@@ -981,7 +981,7 @@ class TransactionsTab(tk.Frame):
         self.var_qty.set("")
         self.var_unit_price.set("")
         self.var_note.set("")
-        self.var_total_preview.set("Estimated Total: —")
+        self.var_total_preview.set("Estimated Total: -")
 
     def _load_selected(self) -> None:
         """Load selected row data into entry form for editing."""

@@ -47,7 +47,7 @@ class SpreadProfitApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
 
-        self.title("SpreadProfit — Precious Metals & Multi-Asset Portfolio Tracker")
+        self.title("SpreadProfit - Precious Metals & Multi-Asset Portfolio Tracker")
         self.geometry("1280x820")
         self.minsize(1050, 700)
         self.configure(bg=CLR_BG)

@@ -39,16 +39,16 @@ PORTABLE_INSTRUCTIONS = """SpreadProfit - Portable Distribution Quickstart
 
 YOUR DATA & PRIVACY
 -------------------
-• All transactions, custom assets, and benchmark market quotes are stored in the local 'data/' folder
+- All transactions, custom assets, and benchmark market quotes are stored in the local 'data/' folder
   adjacent to the executable.
-• To backup your portfolio, copy the 'data/' folder or use the in-app 'Cloud Backup' button.
-• If launched in a restricted directory without write access (e.g., C:/Program Files), SpreadProfit
+- To backup your portfolio, copy the 'data/' folder or use the in-app 'Cloud Backup' button.
+- If launched in a restricted directory without write access (e.g., C:/Program Files), SpreadProfit
   automatically falls back to storing data safely in: %APPDATA%/spreadProfit
 
 NOTES
 -----
-• First launch may take 5–10 seconds to extract bundled resources into memory. Subsequent runs are instant.
-• Windows SmartScreen may show an 'Unknown Publisher' prompt because the binary is unsigned.
+- First launch may take 5-10 seconds to extract bundled resources into memory. Subsequent runs are instant.
+- Windows SmartScreen may show an 'Unknown Publisher' prompt because the binary is unsigned.
   Click 'More info' -> 'Run anyway'.
 """
 

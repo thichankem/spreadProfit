@@ -109,7 +109,7 @@ class PortfolioTab(tk.Frame):
 
             lbl_val = tk.Label(
                 card,
-                text="—",
+                text="-",
                 font=("Segoe UI", 16, "bold"),
                 bg=CLR_PANEL,
                 fg=CLR_TEXT,
@@ -240,7 +240,7 @@ class PortfolioTab(tk.Frame):
         )
         self.cb_price_unit.grid(row=0, column=3, sticky="w", padx=5, pady=5)
 
-        tk.Label(price_grid, text="Buy Price (đ):", bg=CLR_PANEL, fg=CLR_TEXT, font=FONT_BOLD).grid(
+        tk.Label(price_grid, text="Buy Price (VND):", bg=CLR_PANEL, fg=CLR_TEXT, font=FONT_BOLD).grid(
             row=1, column=0, sticky="e", padx=5, pady=5
         )
         self.ent_buy = tk.Entry(
@@ -256,7 +256,7 @@ class PortfolioTab(tk.Frame):
         )
         self.ent_buy.grid(row=1, column=1, sticky="w", padx=5, pady=5)
 
-        tk.Label(price_grid, text="Sell Price (đ):", bg=CLR_PANEL, fg=CLR_TEXT, font=FONT_BOLD).grid(
+        tk.Label(price_grid, text="Sell Price (VND):", bg=CLR_PANEL, fg=CLR_TEXT, font=FONT_BOLD).grid(
             row=1, column=2, sticky="e", padx=10, pady=5
         )
         self.ent_sell = tk.Entry(
@@ -315,7 +315,7 @@ class PortfolioTab(tk.Frame):
         )
         self.cb_wi_asset.grid(row=0, column=1, sticky="w", padx=5, pady=5)
 
-        tk.Label(wi_grid, text="If sold at (đ):", bg=CLR_PANEL, fg=CLR_TEXT, font=FONT_BOLD).grid(
+        tk.Label(wi_grid, text="If sold at (VND):", bg=CLR_PANEL, fg=CLR_TEXT, font=FONT_BOLD).grid(
             row=0, column=2, sticky="e", padx=10, pady=5
         )
         self.ent_target = tk.Entry(
@@ -390,12 +390,12 @@ class PortfolioTab(tk.Frame):
 
             tag = "green" if h["pnl"] >= 0 else "red"
             sign_prefix = "+" if h["pnl"] >= 0 else "-"
-            pnl_str = f"{sign_prefix}{abs(h['pnl']):,.0f} đ" if h["market_price"] > 0 else "—"
+            pnl_str = f"{sign_prefix}{abs(h['pnl']):,.0f} VND" if h["market_price"] > 0 else "-"
 
             pct_sign = "+" if h["pnl_pct"] >= 0 else ""
-            pnl_pct_str = f"{pct_sign}{h['pnl_pct']:.2f}%" if h["market_price"] > 0 else "—"
-            market_price_str = f"{h['market_price']:,.0f}" if h["market_price"] > 0 else "—"
-            current_value_str = f"{h['current_value']:,.0f}" if h["market_price"] > 0 else "—"
+            pnl_pct_str = f"{pct_sign}{h['pnl_pct']:.2f}%" if h["market_price"] > 0 else "-"
+            market_price_str = f"{h['market_price']:,.0f}" if h["market_price"] > 0 else "-"
+            current_value_str = f"{h['current_value']:,.0f}" if h["market_price"] > 0 else "-"
 
             self.tree.insert(
                 "",
@@ -418,11 +418,11 @@ class PortfolioTab(tk.Frame):
         filtered_roi = (filtered_pnl / filtered_cost * 100) if filtered_cost > 0 else 0.0
 
         # Update KPI Cards
-        self.card_cost.configure(text=f"{filtered_cost:,.0f} đ")
-        self.card_value.configure(text=f"{filtered_value:,.0f} đ")
+        self.card_cost.configure(text=f"{filtered_cost:,.0f} VND")
+        self.card_value.configure(text=f"{filtered_value:,.0f} VND")
 
         sign = "+" if filtered_pnl >= 0 else ""
-        self.card_pnl.configure(text=f"{sign}{filtered_pnl:,.0f} đ")
+        self.card_pnl.configure(text=f"{sign}{filtered_pnl:,.0f} VND")
         self.card_pnl.configure(fg=CLR_GREEN if filtered_pnl >= 0 else CLR_RED)
 
         sign_pct = "+" if filtered_roi >= 0 else ""
@@ -501,7 +501,7 @@ class PortfolioTab(tk.Frame):
 
         save_market_prices(self.main_app.current_prices)
         self.main_app.var_status.set(
-            f"Saved price for [{cat}]: {buy_val:,.0f}đ / {sell_val:,.0f}đ per {self.var_price_unit.get()}."
+            f"Saved price for [{cat}]: {buy_val:,.0f} VND / {sell_val:,.0f} VND per {self.var_price_unit.get()}."
         )
         self.refresh_view()
 
@@ -535,10 +535,10 @@ class PortfolioTab(tk.Frame):
         self.lbl_result.configure(fg=color)
         self.var_wi_result.set(
             f"Scenario Simulation for [{asset}]:\n"
-            f"   Holding: {qty:g} {unit}  |  Avg Cost Basis: {h['avg_price']:,.0f} đ\n"
-            f"   Hypothetical Exit Price: {target_price:,.0f} đ / {unit}\n"
-            f"   Estimated Gross Proceeds: {total_proceeds:,.0f} đ\n"
-            f"   Forecast Net PnL: {sign}{pnl:,.0f} đ ({status_label})  |  Projected ROI: {sign_pct}{roi:.2f}%"
+            f"   Holding: {qty:g} {unit}  |  Avg Cost Basis: {h['avg_price']:,.0f} VND\n"
+            f"   Hypothetical Exit Price: {target_price:,.0f} VND / {unit}\n"
+            f"   Estimated Gross Proceeds: {total_proceeds:,.0f} VND\n"
+            f"   Forecast Net PnL: {sign}{pnl:,.0f} VND ({status_label})  |  Projected ROI: {sign_pct}{roi:.2f}%"
         )
 
     def _format_number_entry(self, var: tk.StringVar) -> None:
