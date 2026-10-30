@@ -4,7 +4,7 @@
 
 # SpreadProfit
 
-### *Personal Precious Metals & Multi-Asset Portfolio Tracker • Moving Average Cost Basis Engine*
+### *Personal Precious Metals & Multi-Asset Portfolio Tracker | Moving Average Cost Basis Engine*
 
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13-3776ab?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald?style=for-the-badge)](LICENSE)
@@ -17,11 +17,11 @@
   <b>A private, high-performance, offline-first personal portfolio management application engineered specifically for physical precious metals (Gold, Silver, Platinum) and multi-asset wealth tracking.</b>
 </p>
 
-[Key Features](#key-features) •
-[Architecture](#system-architecture) •
-[Quickstart](#quickstart--installation) •
-[Cloud Backup](#google-cloud-storage-backup) •
-[Building Standalone Binary](#building-portable-executable) •
+[Key Features](#key-features) |
+[Architecture](#system-architecture) |
+[Quickstart](#quickstart--installation) |
+[Cloud Backup](#google-cloud-storage-backup) |
+[Building Standalone Binary](#building-portable-executable) |
 [License](#license)
 
 </div>

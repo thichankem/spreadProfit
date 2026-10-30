@@ -48,6 +48,22 @@ class TestPortfolioCalculations(unittest.TestCase):
         self.assertEqual(normalize_unit("chỉ"), "Chi")
         self.assertEqual(normalize_unit("tael"), "Tael")
 
+    def test_default_seed_assets_english(self) -> None:
+        """Verify default asset models are 100% standard English."""
+        from config import DEFAULT_ASSETS
+
+        self.assertGreater(len(DEFAULT_ASSETS), 0)
+        valid_categories = {"Gold", "Silver"}
+        valid_units = {"Tael", "Chi", "Ounce", "Gram"}
+        for asset in DEFAULT_ASSETS:
+            self.assertIn("name", asset)
+            self.assertIn("category", asset)
+            self.assertIn("unit", asset)
+            self.assertIn(asset["category"], valid_categories)
+            self.assertIn(asset["unit"], valid_units)
+            # Ensure no Vietnamese diacritics in default asset names
+            self.assertTrue(all(ord(c) < 128 for c in asset["name"]))
+
     def test_moving_average_cost_buy_only(self) -> None:
         """Verify weighted average cost basis on multiple buy transactions."""
         txs: List[Dict[str, Any]] = [
