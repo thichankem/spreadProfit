@@ -15,7 +15,12 @@ import sys
 import tempfile
 from typing import Any, Dict, List, Optional, Tuple
 
-from config import get_unit_factor
+from config import (
+    get_unit_factor,
+    normalize_action,
+    normalize_category,
+    normalize_unit,
+)
 
 APP_NAME = "spreadProfit"
 DATA_FILE_NAMES = ("gold_transactions.json", "market_prices.json", "custom_assets.json")
@@ -112,6 +117,11 @@ def load_db() -> List[Dict[str, Any]]:
             with open(DB_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, list):
+                    # Normalize category, action, and unit on load for consistency
+                    for r in data:
+                        r["category"] = normalize_category(r.get("category", "Gold"))
+                        r["action"] = normalize_action(r.get("action", "Buy"))
+                        r["unit"] = normalize_unit(r.get("unit", "Tael"))
                     return data
         except Exception:
             return []
@@ -120,14 +130,14 @@ def load_db() -> List[Dict[str, Any]]:
         {
             "id": 1,
             "date": "2026-03-26",
-            "category": "Vàng",
-            "asset": "Vàng nhẫn 24K Bảo Tín Mạnh Hải",
-            "action": "Mua",
+            "category": "Gold",
+            "asset": "Bao Tin Manh Hai 24K Gold Ring",
+            "action": "Buy",
             "quantity": 2.0,
-            "unit": "Chỉ",
+            "unit": "Chi",
             "unit_price": 18500000.0,
             "total": 37000000.0,
-            "note": "HĐ 00271176 – 2 nhẫn Kim Gia Bảo",
+            "note": "Invoice 00271176 - Kim Gia Bao",
         }
     ]
     save_db(initial_seed)
@@ -135,7 +145,11 @@ def load_db() -> List[Dict[str, Any]]:
 
 
 def save_db(data: List[Dict[str, Any]]) -> None:
-    """Save transaction records atomically to JSON storage."""
+    """Save transaction records atomically to JSON storage with normalization."""
+    for r in data:
+        r["category"] = normalize_category(r.get("category", "Gold"))
+        r["action"] = normalize_action(r.get("action", "Buy"))
+        r["unit"] = normalize_unit(r.get("unit", "Tael"))
     _atomic_write_json(DB_FILE, data)
 
 
@@ -172,9 +186,9 @@ def calculate_portfolio(
         asset = r.get("asset", "").strip()
         if not asset:
             continue
-        category = r.get("category", "Vàng")
-        unit = r.get("unit", "Lượng")
-        action = r.get("action", "Mua")
+        category = normalize_category(r.get("category", "Gold"))
+        unit = normalize_unit(r.get("unit", "Tael"))
+        action = normalize_action(r.get("action", "Buy"))
         qty = float(r.get("quantity", 0.0))
         total = float(r.get("total", 0.0))
 
@@ -187,7 +201,7 @@ def calculate_portfolio(
                 "unit": unit,
             }
 
-        if action == "Mua":
+        if action == "Buy":
             holdings[asset]["qty"] += qty
             holdings[asset]["cost"] += total
         else:  # Sell
@@ -213,9 +227,19 @@ def calculate_portfolio(
 
         avg_price = h["cost"] / h["qty"] if h["qty"] > 0 else 0.0
         cat = h["category"]
-        price_info = current_prices.get(cat, {"buy": 0.0, "sell": 0.0, "unit": "Lượng"})
+
+        # Resolve benchmark price supporting both English and legacy aliases
+        price_info = current_prices.get(cat)
+        if not price_info:
+            if cat == "Gold":
+                price_info = current_prices.get("Vàng")
+            elif cat == "Silver":
+                price_info = current_prices.get("Bạc")
+        if not price_info:
+            price_info = {"buy": 0.0, "sell": 0.0, "unit": "Tael"}
+
         market_buy_price = float(price_info.get("buy", 0.0))
-        price_unit = price_info.get("unit", "Lượng")
+        price_unit = normalize_unit(price_info.get("unit", "Tael"))
 
         # Convert category benchmark price to asset unit
         if market_buy_price > 0:
@@ -255,36 +279,71 @@ def calculate_portfolio(
 
 
 def load_market_prices() -> Dict[str, Dict[str, Any]]:
-    """Load benchmark market prices from JSON storage."""
+    """Load benchmark market prices from JSON storage with English normalization."""
     if os.path.exists(PRICES_FILE):
         try:
             with open(PRICES_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                if isinstance(data, dict) and "Vàng" in data and "Bạc" in data:
-                    return data
+                if isinstance(data, dict):
+                    normalized: Dict[str, Dict[str, Any]] = {}
+                    # Migrate Vietnamese keys if present
+                    if "Gold" in data:
+                        normalized["Gold"] = data["Gold"]
+                    elif "Vàng" in data:
+                        normalized["Gold"] = data["Vàng"]
+
+                    if "Silver" in data:
+                        normalized["Silver"] = data["Silver"]
+                    elif "Bạc" in data:
+                        normalized["Silver"] = data["Bạc"]
+
+                    if "Gold" in normalized and "Silver" in normalized:
+                        # Normalize units inside
+                        for cat_key in ("Gold", "Silver"):
+                            normalized[cat_key]["unit"] = normalize_unit(normalized[cat_key].get("unit", "Tael"))
+                        return normalized
         except Exception:
             pass
 
     default_prices = {
-        "Vàng": {"buy": 80000000.0, "sell": 81000000.0, "unit": "Lượng"},
-        "Bạc": {"buy": 1000000.0, "sell": 1050000.0, "unit": "Lượng"},
+        "Gold": {"buy": 80000000.0, "sell": 81000000.0, "unit": "Tael"},
+        "Silver": {"buy": 1000000.0, "sell": 1050000.0, "unit": "Tael"},
     }
     save_market_prices(default_prices)
     return default_prices
 
 
 def save_market_prices(prices: Dict[str, Any]) -> None:
-    """Save benchmark market prices atomically to JSON storage."""
-    _atomic_write_json(PRICES_FILE, prices)
+    """Save benchmark market prices atomically to JSON storage with English keys."""
+    normalized: Dict[str, Any] = {}
+    for cat, info in prices.items():
+        norm_cat = normalize_category(cat)
+        if isinstance(info, dict):
+            info_copy = dict(info)
+            info_copy["unit"] = normalize_unit(info_copy.get("unit", "Tael"))
+            normalized[norm_cat] = info_copy
+        else:
+            normalized[norm_cat] = info
+
+    # Ensure Gold and Silver exist
+    if "Gold" not in normalized:
+        normalized["Gold"] = {"buy": 80000000.0, "sell": 81000000.0, "unit": "Tael"}
+    if "Silver" not in normalized:
+        normalized["Silver"] = {"buy": 1000000.0, "sell": 1050000.0, "unit": "Tael"}
+
+    _atomic_write_json(PRICES_FILE, normalized)
 
 
 def load_custom_assets() -> List[Dict[str, Any]]:
-    """Load user-defined custom asset configurations."""
+    """Load user-defined custom asset configurations with English normalization."""
     if os.path.exists(CUSTOM_ASSETS_FILE):
         try:
             with open(CUSTOM_ASSETS_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, list):
+                    for a in data:
+                        a["category"] = normalize_category(a.get("category", "Gold"))
+                        a["unit"] = normalize_unit(a.get("unit", "Tael"))
                     return data
         except Exception:
             return []
@@ -293,4 +352,7 @@ def load_custom_assets() -> List[Dict[str, Any]]:
 
 def save_custom_assets(assets: List[Dict[str, Any]]) -> None:
     """Save user-defined custom asset configurations atomically to JSON storage."""
+    for a in assets:
+        a["category"] = normalize_category(a.get("category", "Gold"))
+        a["unit"] = normalize_unit(a.get("unit", "Tael"))
     _atomic_write_json(CUSTOM_ASSETS_FILE, assets)

@@ -35,6 +35,9 @@ from config import (
     FONT_BIG,
     FONT_BOLD,
     FONT_MAIN,
+    normalize_action,
+    normalize_category,
+    normalize_unit,
 )
 from db_manager import calculate_portfolio
 
@@ -138,7 +141,7 @@ class ChartsTab(tk.Frame):
             list({
                 name
                 for name, h in holdings.items()
-                if filter_cat == "All" or h.get("category") == filter_cat
+                if filter_cat == "All" or normalize_category(h.get("category", "Gold")) == filter_cat
             })
         )
         self.cb_asset["values"] = ["All"] + available_assets
@@ -150,7 +153,9 @@ class ChartsTab(tk.Frame):
 
         # Filter active holdings
         if filter_cat != "All":
-            filtered_holdings = {k: v for k, v in holdings.items() if v.get("category") == filter_cat}
+            filtered_holdings = {
+                k: v for k, v in holdings.items() if normalize_category(v.get("category", "Gold")) == filter_cat
+            }
         else:
             filtered_holdings = dict(holdings)
 
@@ -212,7 +217,7 @@ class ChartsTab(tk.Frame):
         pie_data: Dict[str, float] = {}
         if filter_cat == "All":
             for h in filtered_holdings.values():
-                cat = h["category"]
+                cat = normalize_category(h["category"])
                 pie_data[cat] = pie_data.get(cat, 0.0) + h["current_value"]
             title_pie = "Portfolio Allocation by Value"
         else:
@@ -252,7 +257,7 @@ class ChartsTab(tk.Frame):
         val_data: Dict[str, float] = {}
         if filter_cat == "All":
             for h in filtered_holdings.values():
-                cat = h["category"]
+                cat = normalize_category(h["category"])
                 cost_data[cat] = cost_data.get(cat, 0.0) + h["cost"]
                 val_data[cat] = val_data.get(cat, 0.0) + h["current_value"]
             title_bar = "Cost vs Current Value (Million VND)"
@@ -292,9 +297,9 @@ class ChartsTab(tk.Frame):
         ax3 = fig.add_subplot(323)
         ax3.set_facecolor(CLR_BG)
 
-        buy_txs = [r for r in self.main_app.db if r.get("action") == "Mua"]
+        buy_txs = [r for r in self.main_app.db if normalize_action(r.get("action", "Buy")) == "Buy"]
         if filter_cat != "All":
-            buy_txs = [r for r in buy_txs if r.get("category", "Vàng") == filter_cat]
+            buy_txs = [r for r in buy_txs if normalize_category(r.get("category", "Gold")) == filter_cat]
         if current_asset != "All":
             buy_txs = [r for r in buy_txs if r.get("asset") == current_asset]
 
@@ -337,7 +342,7 @@ class ChartsTab(tk.Frame):
         price_comps = [
             {
                 "asset": name,
-                "unit": h["unit"],
+                "unit": normalize_unit(h["unit"]),
                 "avg_price": h["avg_price"],
                 "market_price": h["market_price"],
             }

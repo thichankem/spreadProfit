@@ -1,27 +1,27 @@
 [
   {
-    "name": "Đồng xu hoa sen 1 chỉ",
-    "category": "Vàng",
-    "unit": "Chỉ"
+    "name": "Lotus Gold Coin 1 Chi",
+    "category": "Gold",
+    "unit": "Chi"
   },
   {
-    "name": "Xu tròn 0.1 chỉ",
-    "category": "Vàng",
-    "unit": "Lượng"
+    "name": "Round Gold Coin 0.1 Chi",
+    "category": "Gold",
+    "unit": "0.1 Chi"
   },
   {
-    "name": "Xu tròn 1 chỉ",
-    "category": "Vàng",
-    "unit": "Lượng"
+    "name": "Round Gold Coin 1 Chi",
+    "category": "Gold",
+    "unit": "Chi"
   },
   {
-    "name": "Nhẫn tròn 1 chỉ",
-    "category": "Vàng",
-    "unit": "Lượng"
+    "name": "Round Gold Ring 1 Chi",
+    "category": "Gold",
+    "unit": "Chi"
   },
   {
-    "name": "Bạc miếng 1 lượng",
-    "category": "Bạc",
-    "unit": "Lượng"
+    "name": "Silver Bar 1 Tael",
+    "category": "Silver",
+    "unit": "Tael"
   }
 ]

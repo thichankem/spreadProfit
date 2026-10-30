@@ -14,7 +14,7 @@ import unittest
 from typing import Any, Dict, List
 
 import cloud_backup
-from config import get_unit_factor
+from config import get_unit_factor, normalize_action, normalize_category, normalize_unit
 from db_manager import calculate_portfolio, next_id
 
 
@@ -23,12 +23,30 @@ class TestPortfolioCalculations(unittest.TestCase):
 
     def test_unit_conversion_factors(self) -> None:
         """Ensure standard precious metals units resolve to correct Troy Ounce factors."""
+        self.assertAlmostEqual(get_unit_factor("tael"), 1.2057, places=4)
         self.assertAlmostEqual(get_unit_factor("lượng"), 1.2057, places=4)
+        self.assertAlmostEqual(get_unit_factor("chi"), 0.12057, places=4)
         self.assertAlmostEqual(get_unit_factor("chỉ"), 0.12057, places=4)
         self.assertAlmostEqual(get_unit_factor("ounce"), 1.0, places=4)
-        self.assertAlmostEqual(get_unit_factor("0.1 chỉ"), 0.012057, places=5)
+        self.assertAlmostEqual(get_unit_factor("0.1 chi"), 0.012057, places=5)
         # Default fallback
         self.assertEqual(get_unit_factor("unknown_unit"), 1.0)
+
+    def test_normalizers(self) -> None:
+        """Verify category, action, and unit normalizers to standard English."""
+        self.assertEqual(normalize_category("Vàng"), "Gold")
+        self.assertEqual(normalize_category("gold"), "Gold")
+        self.assertEqual(normalize_category("Bạc"), "Silver")
+        self.assertEqual(normalize_category("silver"), "Silver")
+
+        self.assertEqual(normalize_action("Mua"), "Buy")
+        self.assertEqual(normalize_action("buy"), "Buy")
+        self.assertEqual(normalize_action("Bán"), "Sell")
+        self.assertEqual(normalize_action("sell"), "Sell")
+
+        self.assertEqual(normalize_unit("lượng"), "Tael")
+        self.assertEqual(normalize_unit("chỉ"), "Chi")
+        self.assertEqual(normalize_unit("tael"), "Tael")
 
     def test_moving_average_cost_buy_only(self) -> None:
         """Verify weighted average cost basis on multiple buy transactions."""
@@ -36,27 +54,27 @@ class TestPortfolioCalculations(unittest.TestCase):
             {
                 "id": 1,
                 "date": "2026-01-01",
-                "category": "Vàng",
+                "category": "Gold",
                 "asset": "Gold Coin 1",
-                "action": "Mua",
+                "action": "Buy",
                 "quantity": 2.0,
-                "unit": "Chỉ",
+                "unit": "Chi",
                 "unit_price": 10000000.0,
                 "total": 20000000.0,
             },
             {
                 "id": 2,
                 "date": "2026-01-02",
-                "category": "Vàng",
+                "category": "Gold",
                 "asset": "Gold Coin 1",
-                "action": "Mua",
+                "action": "Buy",
                 "quantity": 2.0,
-                "unit": "Chỉ",
+                "unit": "Chi",
                 "unit_price": 12000000.0,
                 "total": 24000000.0,
             },
         ]
-        prices = {"Vàng": {"buy": 15000000.0, "sell": 15500000.0, "unit": "Chỉ"}}
+        prices = {"Gold": {"buy": 15000000.0, "sell": 15500000.0, "unit": "Chi"}}
         holdings, summary = calculate_portfolio(txs, prices)
 
         asset = holdings["Gold Coin 1"]
@@ -73,27 +91,27 @@ class TestPortfolioCalculations(unittest.TestCase):
             {
                 "id": 1,
                 "date": "2026-01-01",
-                "category": "Vàng",
+                "category": "Gold",
                 "asset": "Gold Bar",
-                "action": "Mua",
+                "action": "Buy",
                 "quantity": 4.0,
-                "unit": "Lượng",
+                "unit": "Tael",
                 "unit_price": 80000000.0,
                 "total": 320000000.0,
             },
             {
                 "id": 2,
                 "date": "2026-01-05",
-                "category": "Vàng",
+                "category": "Gold",
                 "asset": "Gold Bar",
-                "action": "Bán",
+                "action": "Sell",
                 "quantity": 2.0,
-                "unit": "Lượng",
+                "unit": "Tael",
                 "unit_price": 90000000.0,
                 "total": 180000000.0,
             },
         ]
-        prices = {"Vàng": {"buy": 85000000.0, "sell": 86000000.0, "unit": "Lượng"}}
+        prices = {"Gold": {"buy": 85000000.0, "sell": 86000000.0, "unit": "Tael"}}
         holdings, summary = calculate_portfolio(txs, prices)
 
         asset = holdings["Gold Bar"]

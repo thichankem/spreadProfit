@@ -1,12 +1,12 @@
 {
-  "Vàng": {
+  "Gold": {
     "buy": 15050000.0,
     "sell": 15450000.0,
-    "unit": "Chỉ"
+    "unit": "Chi"
   },
-  "Bạc": {
+  "Silver": {
     "buy": 2272000.0,
     "sell": 2395000.0,
-    "unit": "Lượng"
+    "unit": "Tael"
   }
 }

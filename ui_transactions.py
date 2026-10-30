@@ -33,6 +33,9 @@ from config import (
     FONT_BOLD,
     FONT_MAIN,
     get_unit_factor,
+    normalize_action,
+    normalize_category,
+    normalize_unit,
 )
 from db_manager import DATA_DIR, load_custom_assets, next_id, save_custom_assets, save_db
 
@@ -212,16 +215,16 @@ class TransactionsTab(tk.Frame):
         self.var_category = tk.StringVar(value=ASSET_CATEGORIES[0])
         self.var_asset_select = tk.StringVar()
         self.var_custom_name = tk.StringVar()
-        self.var_action = tk.StringVar(value="Mua")
+        self.var_action = tk.StringVar(value="Buy")
         self.var_qty = tk.StringVar()
-        self.var_unit = tk.StringVar()
+        self.var_unit = tk.StringVar(value="Tael")
         self.var_unit_price = tk.StringVar()
         self.var_note = tk.StringVar()
         self.var_search = tk.StringVar()
         self.var_filter_cat = tk.StringVar(value="All")
         self.var_total_preview = tk.StringVar(value="Estimated Total: —")
         self.editing_id: Optional[int] = None
-        self.last_unit: str = ""
+        self.last_unit: str = "Tael"
 
         self._build_ui()
         self._on_category_change()
@@ -428,7 +431,7 @@ class TransactionsTab(tk.Frame):
         cb_act = ttk.Combobox(
             form_frame,
             textvariable=self.var_action,
-            values=["Mua", "Bán"],
+            values=["Buy", "Sell"],
             state="readonly",
             font=FONT_MAIN,
         )
@@ -460,8 +463,8 @@ class TransactionsTab(tk.Frame):
             qty_unit_box,
             textvariable=self.var_unit,
             values=[
-                "Lượng", "Cây", "Chỉ", "0.1 Chỉ", "0.2 Chỉ", "0.3 Chỉ",
-                "0.5 Chỉ", "2 Chỉ", "3 Chỉ", "5 Chỉ", "Ounce", "Gram",
+                "Tael", "Chi", "0.1 Chi", "0.2 Chi", "0.3 Chi",
+                "0.5 Chi", "2 Chi", "3 Chi", "5 Chi", "Ounce", "Gram",
             ],
             font=FONT_MAIN,
             width=8,
@@ -696,7 +699,7 @@ class TransactionsTab(tk.Frame):
 
     def _on_category_change(self, event: Any = None) -> None:
         """Update available assets in dropdown when switching categories."""
-        cat = self.var_category.get()
+        cat = normalize_category(self.var_category.get())
         assets = [a for a in DEFAULT_ASSETS if a["category"] == cat]
         custom_assets = load_custom_assets()
         assets += [a for a in custom_assets if a.get("category") == cat]
@@ -720,7 +723,7 @@ class TransactionsTab(tk.Frame):
         if val == "Custom / Other...":
             self.custom_assets_frame.grid()
             self.var_custom_name.set("")
-            self.var_unit.set("")
+            self.var_unit.set("Tael")
         else:
             self.custom_assets_frame.grid_remove()
             asset_info = next((a for a in DEFAULT_ASSETS if a["name"] == val), None)
@@ -728,14 +731,14 @@ class TransactionsTab(tk.Frame):
                 asset_info = next((a for a in custom_assets if a["name"] == val), None)
             if asset_info:
                 self.var_custom_name.set(asset_info["name"])
-                self.var_unit.set(asset_info["unit"])
+                self.var_unit.set(normalize_unit(asset_info["unit"]))
 
         self.last_unit = self.var_unit.get()
         self._update_price_from_market()
 
     def _on_unit_selected(self, event: Any = None) -> None:
         """Automatically recalculate quantity and unit price when switching units."""
-        new_unit = self.var_unit.get().strip()
+        new_unit = normalize_unit(self.var_unit.get().strip())
         old_unit = getattr(self, "last_unit", "")
         self.last_unit = new_unit
 
@@ -818,13 +821,17 @@ class TransactionsTab(tk.Frame):
 
     def _update_price_from_market(self) -> None:
         """Autofill unit price using current benchmark market quotes."""
-        cat = self.var_category.get()
-        if cat in self.main_app.current_prices:
-            prices = self.main_app.current_prices[cat]
-            action = self.var_action.get()
-            price = prices["sell"] if action == "Mua" else prices["buy"]
-            price_unit = prices.get("unit", "Lượng")
-            form_unit = self.var_unit.get().strip()
+        cat = normalize_category(self.var_category.get())
+        price_info = self.main_app.current_prices.get(cat)
+        if not price_info:
+            legacy_key = "Vàng" if cat == "Gold" else "Bạc"
+            price_info = self.main_app.current_prices.get(legacy_key)
+
+        if price_info:
+            action = normalize_action(self.var_action.get())
+            price = price_info["sell"] if action == "Buy" else price_info["buy"]
+            price_unit = normalize_unit(price_info.get("unit", "Tael"))
+            form_unit = normalize_unit(self.var_unit.get().strip())
 
             if price > 0:
                 ratio = get_unit_factor(price_unit) / get_unit_factor(form_unit)
@@ -843,7 +850,7 @@ class TransactionsTab(tk.Frame):
         filter_cat = self.var_filter_cat.get()
 
         for r in sorted(self.main_app.db, key=lambda x: str(x.get("date", "")), reverse=True):
-            cat = r.get("category", "Vàng")
+            cat = normalize_category(r.get("category", "Gold"))
             if filter_cat != "All" and cat != filter_cat:
                 continue
 
@@ -854,8 +861,9 @@ class TransactionsTab(tk.Frame):
             if search_kw and (search_kw not in asset_name and search_kw not in note and search_kw not in date_str):
                 continue
 
-            tag = "buy" if r.get("action") == "Mua" else "sell"
-            action_label = "🟢 Buy" if r.get("action") == "Mua" else "🔴 Sell"
+            action = normalize_action(r.get("action", "Buy"))
+            tag = "buy" if action == "Buy" else "sell"
+            action_label = "🟢 Buy" if action == "Buy" else "🔴 Sell"
 
             self.tree.insert(
                 "",
@@ -868,7 +876,7 @@ class TransactionsTab(tk.Frame):
                     r["asset"],
                     action_label,
                     f"{r['quantity']:g}",
-                    r["unit"],
+                    normalize_unit(r["unit"]),
                     f"{r['unit_price']:,.0f}",
                     f"{r['total']:,.0f}",
                     r.get("note", ""),
@@ -897,8 +905,8 @@ class TransactionsTab(tk.Frame):
             ):
                 new_asset = {
                     "name": asset_name,
-                    "category": self.var_category.get(),
-                    "unit": self.var_unit.get().strip(),
+                    "category": normalize_category(self.var_category.get()),
+                    "unit": normalize_unit(self.var_unit.get().strip()),
                 }
                 custom_assets.append(new_asset)
                 save_custom_assets(custom_assets)
@@ -910,6 +918,10 @@ class TransactionsTab(tk.Frame):
             messagebox.showerror("Validation Error", "Please provide a valid transaction date.")
             return
 
+        cat = normalize_category(self.var_category.get())
+        act = normalize_action(self.var_action.get())
+        unit = normalize_unit(self.var_unit.get().strip())
+
         if self.editing_id is not None:
             # Edit existing record
             rec = next((r for r in self.main_app.db if r["id"] == self.editing_id), None)
@@ -919,11 +931,11 @@ class TransactionsTab(tk.Frame):
                 return
 
             rec["date"] = tx_date
-            rec["category"] = self.var_category.get()
+            rec["category"] = cat
             rec["asset"] = asset_name
-            rec["action"] = self.var_action.get()
+            rec["action"] = act
             rec["quantity"] = qty
-            rec["unit"] = self.var_unit.get().strip()
+            rec["unit"] = unit
             rec["unit_price"] = price
             rec["total"] = qty * price
             rec["note"] = self.var_note.get().strip()
@@ -938,11 +950,11 @@ class TransactionsTab(tk.Frame):
             rec = {
                 "id": next_id(self.main_app.db),
                 "date": tx_date,
-                "category": self.var_category.get(),
+                "category": cat,
                 "asset": asset_name,
-                "action": self.var_action.get(),
+                "action": act,
                 "quantity": qty,
-                "unit": self.var_unit.get().strip(),
+                "unit": unit,
                 "unit_price": price,
                 "total": qty * price,
                 "note": self.var_note.get().strip(),
@@ -994,7 +1006,7 @@ class TransactionsTab(tk.Frame):
             btn.pack(side="left", padx=4)
 
         self.set_date(rec.get("date", ""))
-        self.var_category.set(rec.get("category", ASSET_CATEGORIES[0]))
+        self.var_category.set(normalize_category(rec.get("category", ASSET_CATEGORIES[0])))
         self._on_category_change()
 
         found_in_default = any(a["name"] == rec["asset"] for a in DEFAULT_ASSETS)
@@ -1006,11 +1018,11 @@ class TransactionsTab(tk.Frame):
             self.custom_assets_frame.grid()
             self.var_custom_name.set(rec["asset"])
 
-        self.var_action.set(rec["action"])
+        self.var_action.set(normalize_action(rec["action"]))
         self.var_qty.set(f"{rec['quantity']:g}")
-        self.var_unit.set(rec["unit"])
+        self.var_unit.set(normalize_unit(rec["unit"]))
         self.var_unit_price.set(f"{rec['unit_price']:,.0f}")
-        self.last_unit = rec["unit"]
+        self.last_unit = normalize_unit(rec["unit"])
         self.var_note.set(rec.get("note", ""))
 
     def _delete_selected(self) -> None:
@@ -1089,8 +1101,8 @@ class TransactionsTab(tk.Frame):
 
         new_asset = {
             "name": asset_name,
-            "category": self.var_category.get(),
-            "unit": self.var_unit.get().strip() or "Lượng",
+            "category": normalize_category(self.var_category.get()),
+            "unit": normalize_unit(self.var_unit.get().strip() or "Tael"),
         }
         custom_assets.append(new_asset)
         save_custom_assets(custom_assets)
@@ -1188,11 +1200,11 @@ class TransactionsTab(tk.Frame):
                         writer.writerow([
                             r["id"],
                             r.get("date", ""),
-                            r.get("category", ""),
+                            normalize_category(r.get("category", "")),
                             r["asset"],
-                            r["action"],
+                            normalize_action(r["action"]),
                             r["quantity"],
-                            r["unit"],
+                            normalize_unit(r["unit"]),
                             r["unit_price"],
                             r["total"],
                             r.get("note", ""),
@@ -1208,11 +1220,11 @@ class TransactionsTab(tk.Frame):
                     ws.append([
                         r["id"],
                         r.get("date", ""),
-                        r.get("category", ""),
+                        normalize_category(r.get("category", "")),
                         r["asset"],
-                        r["action"],
+                        normalize_action(r["action"]),
                         r["quantity"],
-                        r["unit"],
+                        normalize_unit(r["unit"]),
                         r["unit_price"],
                         r["total"],
                         r.get("note", ""),
@@ -1253,11 +1265,11 @@ class TransactionsTab(tk.Frame):
                     price = float(item["unit_price"])
                     imported_records.append({
                         "date": str(item["date"]),
-                        "category": str(item.get("category", "Vàng")),
+                        "category": normalize_category(str(item.get("category", "Gold"))),
                         "asset": str(item["asset"]),
-                        "action": str(item["action"]),
+                        "action": normalize_action(str(item["action"])),
                         "quantity": qty,
-                        "unit": str(item["unit"]),
+                        "unit": normalize_unit(str(item["unit"])),
                         "unit_price": price,
                         "total": float(item.get("total", qty * price)),
                         "note": str(item.get("note", "")),
@@ -1299,11 +1311,11 @@ class TransactionsTab(tk.Frame):
                         )
                         imported_records.append({
                             "date": row[idx_date].strip(),
-                            "category": row[idx_cat].strip() if idx_cat != -1 else "Vàng",
+                            "category": normalize_category(row[idx_cat].strip() if idx_cat != -1 else "Gold"),
                             "asset": row[idx_asset].strip(),
-                            "action": row[idx_action].strip() if idx_action != -1 else "Mua",
+                            "action": normalize_action(row[idx_action].strip() if idx_action != -1 else "Buy"),
                             "quantity": qty,
-                            "unit": row[idx_unit].strip() if idx_unit != -1 else "Lượng",
+                            "unit": normalize_unit(row[idx_unit].strip() if idx_unit != -1 else "Tael"),
                             "unit_price": price,
                             "total": total,
                             "note": row[idx_note].strip() if idx_note != -1 else "",
@@ -1355,11 +1367,11 @@ class TransactionsTab(tk.Frame):
 
                     imported_records.append({
                         "date": date_str,
-                        "category": str(row[idx_cat]).strip() if idx_cat != -1 and row[idx_cat] else "Vàng",
+                        "category": normalize_category(str(row[idx_cat]).strip() if idx_cat != -1 and row[idx_cat] else "Gold"),
                         "asset": str(row[idx_asset]).strip(),
-                        "action": str(row[idx_action]).strip() if idx_action != -1 and row[idx_action] else "Mua",
+                        "action": normalize_action(str(row[idx_action]).strip() if idx_action != -1 and row[idx_action] else "Buy"),
                         "quantity": qty,
-                        "unit": str(row[idx_unit]).strip() if idx_unit != -1 and row[idx_unit] else "Lượng",
+                        "unit": normalize_unit(str(row[idx_unit]).strip() if idx_unit != -1 and row[idx_unit] else "Tael"),
                         "unit_price": price,
                         "total": total,
                         "note": str(row[idx_note]).strip() if idx_note != -1 and row[idx_note] else "",

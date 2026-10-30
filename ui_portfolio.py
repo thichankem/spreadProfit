@@ -25,6 +25,8 @@ from config import (
     CLR_TEXT_MUTED,
     FONT_BOLD,
     FONT_MAIN,
+    normalize_category,
+    normalize_unit,
 )
 from db_manager import calculate_portfolio, save_market_prices
 
@@ -212,11 +214,11 @@ class PortfolioTab(tk.Frame):
         tk.Label(price_grid, text="Category:", bg=CLR_PANEL, fg=CLR_TEXT, font=FONT_BOLD).grid(
             row=0, column=0, sticky="e", padx=5, pady=5
         )
-        self.var_price_asset_sel = tk.StringVar()
+        self.var_price_asset_sel = tk.StringVar(value=ASSET_CATEGORIES[0])
         self.cb_price_asset = ttk.Combobox(
             price_grid,
             textvariable=self.var_price_asset_sel,
-            values=["Vàng", "Bạc"],
+            values=ASSET_CATEGORIES,
             state="readonly",
             font=FONT_MAIN,
             width=12,
@@ -227,11 +229,11 @@ class PortfolioTab(tk.Frame):
         tk.Label(price_grid, text="Price Unit:", bg=CLR_PANEL, fg=CLR_TEXT, font=FONT_BOLD).grid(
             row=0, column=2, sticky="e", padx=10, pady=5
         )
-        self.var_price_unit = tk.StringVar(value="Lượng")
+        self.var_price_unit = tk.StringVar(value="Tael")
         self.cb_price_unit = ttk.Combobox(
             price_grid,
             textvariable=self.var_price_unit,
-            values=["Lượng", "Cây", "Chỉ", "Ounce", "Gram"],
+            values=["Tael", "Chi", "Ounce", "Gram"],
             state="readonly",
             font=FONT_MAIN,
             width=10,
@@ -378,7 +380,7 @@ class PortfolioTab(tk.Frame):
             self.tree.delete(row)
 
         for asset, h in sorted(self.active_holdings.items(), key=lambda x: (x[1]["category"], x[0])):
-            cat = h.get("category", "Vàng")
+            cat = normalize_category(h.get("category", "Gold"))
             if filter_cat != "All" and cat != filter_cat:
                 continue
 
@@ -401,9 +403,9 @@ class PortfolioTab(tk.Frame):
                 tags=(tag,),
                 values=(
                     h["asset"],
-                    h["category"],
+                    cat,
                     f"{h['qty']:g}",
-                    h["unit"],
+                    normalize_unit(h["unit"]),
                     f"{h['avg_price']:,.0f}",
                     market_price_str,
                     f"{h['cost']:,.0f}",
@@ -431,7 +433,7 @@ class PortfolioTab(tk.Frame):
         active_assets = [
             asset
             for asset, h in self.active_holdings.items()
-            if (filter_cat == "All" or h.get("category", "Vàng") == filter_cat)
+            if (filter_cat == "All" or normalize_category(h.get("category", "Gold")) == filter_cat)
         ]
         self.cb_wi_asset.configure(values=active_assets)
         if active_assets:
@@ -448,14 +450,18 @@ class PortfolioTab(tk.Frame):
 
     def _on_price_asset_combobox_change(self, event: Any = None) -> None:
         """Load benchmark price information for the selected category."""
-        cat = self.var_price_asset_sel.get()
+        cat = normalize_category(self.var_price_asset_sel.get())
         if not cat:
             return
 
-        price_info = self.main_app.current_prices.get(cat, {"buy": 0.0, "sell": 0.0, "unit": "Lượng"})
+        price_info = self.main_app.current_prices.get(cat)
+        if not price_info:
+            legacy_key = "Vàng" if cat == "Gold" else "Bạc"
+            price_info = self.main_app.current_prices.get(legacy_key, {"buy": 0.0, "sell": 0.0, "unit": "Tael"})
+
         buy_val = price_info.get("buy", 0.0)
         sell_val = price_info.get("sell", 0.0)
-        unit = price_info.get("unit", "Lượng")
+        unit = normalize_unit(price_info.get("unit", "Tael"))
 
         self.var_buy_price.set(f"{buy_val:,.0f}" if buy_val > 0 else "")
         self.var_sell_price.set(f"{sell_val:,.0f}" if sell_val > 0 else "")
@@ -467,7 +473,7 @@ class PortfolioTab(tk.Frame):
         if not selection:
             return
         row_vals = self.tree.item(selection[0])["values"]
-        category = row_vals[1]
+        category = normalize_category(row_vals[1])
 
         if category in ASSET_CATEGORIES:
             self.var_price_asset_sel.set(category)
@@ -475,7 +481,7 @@ class PortfolioTab(tk.Frame):
 
     def _save_price(self) -> None:
         """Persist updated benchmark market prices."""
-        cat = self.var_price_asset_sel.get()
+        cat = normalize_category(self.var_price_asset_sel.get())
         if not cat:
             messagebox.showwarning("Notice", "Please select an asset category to edit.")
             return
@@ -490,7 +496,7 @@ class PortfolioTab(tk.Frame):
         self.main_app.current_prices[cat] = {
             "buy": buy_val,
             "sell": sell_val,
-            "unit": self.var_price_unit.get(),
+            "unit": normalize_unit(self.var_price_unit.get()),
         }
 
         save_market_prices(self.main_app.current_prices)
@@ -515,7 +521,7 @@ class PortfolioTab(tk.Frame):
         h = self.active_holdings[asset]
         qty = h["qty"]
         cost = h["cost"]
-        unit = h["unit"]
+        unit = normalize_unit(h["unit"])
 
         total_proceeds = qty * target_price
         pnl = total_proceeds - cost
