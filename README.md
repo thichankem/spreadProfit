@@ -17,21 +17,21 @@
   <b>A private, high-performance, offline-first personal portfolio management application engineered specifically for physical precious metals (Gold, Silver, Platinum) and multi-asset wealth tracking.</b>
 </p>
 
-[Key Features](#-key-features) •
-[Architecture](#-system-architecture) •
-[Quickstart](#-quickstart--installation) •
-[Cloud Backup](#-google-cloud-storage-backup) •
-[Building Standalone Binary](#-building-portable-executable) •
-[License](#-license)
+[Key Features](#key-features) •
+[Architecture](#system-architecture) •
+[Quickstart](#quickstart--installation) •
+[Cloud Backup](#google-cloud-storage-backup) •
+[Building Standalone Binary](#building-portable-executable) •
+[License](#license)
 
 </div>
 
 ---
 
-## 🌟 Overview
+## Overview
 
 Most retail investors who accumulate physical gold, silver, or precious assets face distinct tracking challenges:
-1. **Disparate Bullion Units**: Transactions occur in non-metric traditional units (e.g., Vietnamese *Lượng*, *Cây*, *Chỉ*, fractional *0.1–5 Chỉ*) alongside international metrics (*Troy Ounce*, *Gram*).
+1. **Disparate Bullion Units**: Transactions occur in non-metric traditional units (e.g., Vietnamese *Tael / Luong*, *Chi / Mace*, fractional *0.1-5 Chi*) alongside international metrics (*Troy Ounce*, *Gram*).
 2. **Complex Cost Basis**: Staggered purchases over months or years require an accurate **Moving Weighted Average Cost (MAC)** basis to correctly compute true capital outlays and real-time PnL.
 3. **Privacy Concerns**: Storing exact physical metal holdings and net worth on third-party cloud SaaS introduces privacy and security risks.
 
@@ -39,25 +39,25 @@ Most retail investors who accumulate physical gold, silver, or precious assets f
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
-### 💼 Portfolio Management & Financial Analytics
+### Portfolio Management & Financial Analytics
 * **Moving Weighted Average Cost (MAC) Engine**: Automatically computes cost basis chronologically across staggered buy and partial sell transactions.
-* **Dual-Region Unit Conversions**: Seamlessly translates between Vietnamese units (*Lượng*, *Cây*, *Chỉ*, *0.1 Chỉ* to *5 Chỉ*) and international standards (*Troy Ounce*, *Gram*) using standard Troy conversion ratios ($1\text{ Lượng} = 1.2057\text{ oz troy}$).
+* **Dual-Region Unit Conversions**: Seamlessly translates between traditional bullion units (*Tael*, *Chi*, fractional *Chi*) and international standards (*Troy Ounce*, *Gram*) using standard Troy conversion ratios ($1\text{ Tael} = 1.2057\text{ oz troy}$).
 * **Real-Time Unrealized PnL & ROI**: Instant valuation cards showing total invested capital, current portfolio market value, net unrealized gain/loss, and ROI %.
 * **Benchmark Market Quotes**: Quick-update panel to set current market buy/sell prices by category (*Gold*, *Silver*) with automatic unit parity.
 
-### 🔮 What-If Scenario Simulator
+### What-If Scenario Simulator
 * Forecast gross liquidation proceeds, net dollar profit, and target ROI % before executing any physical bullion sell transaction.
 
-### 📈 Embedded Visual Analytics (5 Subplots)
+### Embedded Visual Analytics (5 Subplots)
 1. **Asset Allocation Donut Chart**: Breakdown of portfolio value by asset category or holding.
 2. **Cost vs Value Bar Chart**: Comparison between historical invested capital and current market valuation.
 3. **Cumulative Purchase Trend Line**: Capital inflow timeline across historical transaction dates.
 4. **Cost Basis vs Benchmark Price**: Side-by-side comparison of purchase cost basis vs current spot prices.
 5. **Net PnL Horizontal Bar Chart**: Color-coded profit and loss distribution across individual holdings.
 
-### 🛡️ Privacy & Cloud Synchronization
+### Privacy & Cloud Synchronization
 * **100% Local Offline Storage**: Stored as clean JSON in `data/` adjacent to the binary or `%APPDATA%/spreadProfit`.
 * **Atomic Writes**: Uses temporary swap writes to guarantee zero database corruption during unexpected power outages.
 * **Google Cloud Storage (GCS) Sync**: Integrated `cloud_backup.py` module creates timestamped snapshots and uploads to your private Google Cloud Storage bucket.
@@ -65,7 +65,7 @@ Most retail investors who accumulate physical gold, silver, or precious assets f
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```mermaid
 flowchart TD
@@ -108,7 +108,7 @@ flowchart TD
 
 ---
 
-## 💻 Quickstart & Installation
+## Quickstart & Installation
 
 ### Prerequisites
 * **Python**: 3.11, 3.12, or 3.13 (64-bit recommended)
@@ -138,7 +138,7 @@ python app.py
 
 ---
 
-## ☁️ Google Cloud Storage Backup
+## Google Cloud Storage Backup
 
 SpreadProfit includes native snapshot generation and Google Cloud Storage (GCS) synchronization via `cloud_backup.py`.
 
@@ -165,7 +165,7 @@ gcloud auth application-default login
 ```
 
 ### 3. Run Backup Command
-* **From the GUI**: Click the **`☁️ Cloud Backup`** button in the top navigation bar.
+* **From the GUI**: Click the **`Cloud Backup`** button in the top navigation bar.
 * **From the Terminal / CLI**:
   ```bash
   python cloud_backup.py
@@ -179,7 +179,7 @@ Every backup creates:
 
 ---
 
-## 📦 Building Portable Executable
+## Building Portable Executable
 
 To compile a standalone, single-file Windows executable (`SpreadProfit.exe`) that runs on any machine without installing Python:
 
@@ -196,7 +196,7 @@ Upon completion, the script generates:
 
 ---
 
-## 🧪 Running Automated Tests
+## Running Automated Tests
 
 SpreadProfit includes a comprehensive suite of unit tests validating cost basis math, unit parity, atomic writes, and UI initialization:
 
@@ -206,7 +206,7 @@ python -m unittest discover -s tests -p "test_*.py"
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 spreadProfit/
@@ -238,7 +238,7 @@ spreadProfit/
 
 ---
 
-## 📄 License
+## License
 
 This project is open-source and released under the terms of the [MIT License](LICENSE).
 

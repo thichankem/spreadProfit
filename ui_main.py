@@ -61,7 +61,7 @@ class SpreadProfitApp(tk.Tk):
         self.current_prices = load_market_prices()
 
         # Global status variable
-        self.var_status = tk.StringVar(value="System ready (Offline-first mode).")
+        self.var_status = tk.StringVar(value="System ready. Running in private offline mode.")
 
         # Configure global selection colors for text entries
         self.option_add("*Entry.selectBackground", "#4f46e5")
@@ -111,7 +111,7 @@ class SpreadProfitApp(tk.Tk):
 
         title_lbl = tk.Label(
             title_box,
-            text="💰 SPREADPROFIT",
+            text="SPREADPROFIT",
             font=("Segoe UI", 16, "bold"),
             bg=CLR_PANEL,
             fg=CLR_GOLD,
@@ -120,8 +120,8 @@ class SpreadProfitApp(tk.Tk):
 
         subtitle_lbl = tk.Label(
             title_box,
-            text="Precious Metals & Multi-Asset Portfolio Tracker • Moving Average Cost Basis",
-            font=("Segoe UI", 9, "italic"),
+            text="Precious Metals & Multi-Asset Portfolio Tracker | Moving Average Cost Basis",
+            font=("Segoe UI", 9),
             bg=CLR_PANEL,
             fg=CLR_TEXT_MUTED,
         )
@@ -133,7 +133,7 @@ class SpreadProfitApp(tk.Tk):
 
         btn_backup = tk.Button(
             actions_box,
-            text="☁️  Cloud Backup",
+            text="Cloud Backup",
             command=self.trigger_cloud_backup,
             bg="#0284c7",
             fg="white",
@@ -147,7 +147,7 @@ class SpreadProfitApp(tk.Tk):
 
         btn_refresh = tk.Button(
             actions_box,
-            text="🔄  Reload",
+            text="Reload",
             command=self.refresh_prices,
             bg="#334155",
             fg=CLR_TEXT,
@@ -168,10 +168,10 @@ class SpreadProfitApp(tk.Tk):
         self.tab_transactions = TransactionsTab(self.notebook, self)
         self.tab_charts = ChartsTab(self.notebook, self)
 
-        # Register tabs
-        self.notebook.add(self.tab_portfolio, text=" 💼  Portfolio & PnL ")
-        self.notebook.add(self.tab_transactions, text=" 📝  Transaction History ")
-        self.notebook.add(self.tab_charts, text=" 📈  Visual Analytics ")
+        # Register tabs without emojis
+        self.notebook.add(self.tab_portfolio, text=" Portfolio & PnL ")
+        self.notebook.add(self.tab_transactions, text=" Transactions ")
+        self.notebook.add(self.tab_charts, text=" Analytics ")
 
         # Event binding for tab switches
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)

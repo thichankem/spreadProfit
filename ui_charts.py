@@ -68,7 +68,7 @@ class ChartsTab(tk.Frame):
 
         tk.Label(
             header_frame,
-            text="📊  PORTFOLIO ANALYTICS & VISUAL METRICS",
+            text="PORTFOLIO ANALYTICS & VISUAL METRICS",
             font=FONT_BOLD,
             bg=CLR_BG,
             fg=CLR_HEAD,
@@ -107,7 +107,7 @@ class ChartsTab(tk.Frame):
         # Reload Button
         tk.Button(
             header_frame,
-            text="🔄  Redraw Charts",
+            text="Refresh Charts",
             command=self.draw_charts,
             bg="#4f46e5",
             fg="white",
@@ -165,7 +165,7 @@ class ChartsTab(tk.Frame):
         if not filtered_holdings:
             no_data = tk.Label(
                 self.chart_container,
-                text=f"⚠️  No holdings found in category '{filter_cat}' to visualize.",
+                text=f"No holdings found in category '{filter_cat}' to visualize.",
                 font=FONT_BIG,
                 bg=CLR_BG,
                 fg=CLR_TEXT_MUTED,

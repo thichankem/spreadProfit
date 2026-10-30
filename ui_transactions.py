@@ -76,7 +76,7 @@ class CalendarDialog(tk.Toplevel):
 
         tk.Button(
             header,
-            text="◀",
+            text="<",
             command=self.prev_month,
             bg=CLR_ENTRY,
             fg=CLR_TEXT,
@@ -98,7 +98,7 @@ class CalendarDialog(tk.Toplevel):
 
         tk.Button(
             header,
-            text="▶",
+            text=">",
             command=self.next_month,
             bg=CLR_ENTRY,
             fg=CLR_TEXT,
@@ -246,7 +246,7 @@ class TransactionsTab(tk.Frame):
         # ---------------- Left Panel: Transaction Entry Form ----------------
         form_frame = tk.LabelFrame(
             left_panel,
-            text=" 📝  TRANSACTION ENTRY ",
+            text=" TRANSACTION ENTRY ",
             font=FONT_BOLD,
             bg=CLR_PANEL,
             fg=CLR_GOLD,
@@ -313,7 +313,7 @@ class TransactionsTab(tk.Frame):
 
         tk.Button(
             date_frame,
-            text="📅",
+            text="Cal",
             command=self._show_calendar,
             bg=CLR_ENTRY,
             fg=CLR_TEXT,
@@ -359,13 +359,13 @@ class TransactionsTab(tk.Frame):
 
         self.btn_edit_asset = tk.Button(
             asset_select_frame,
-            text="✏️",
+            text="Edit",
             command=self._edit_custom_asset,
             bg=CLR_ENTRY,
             fg=CLR_TEXT,
             font=("Segoe UI", 9),
             relief="flat",
-            padx=4,
+            padx=5,
             cursor="hand2",
             state="disabled",
         )
@@ -373,13 +373,13 @@ class TransactionsTab(tk.Frame):
 
         self.btn_del_asset = tk.Button(
             asset_select_frame,
-            text="🗑️",
+            text="Del",
             command=self._delete_custom_asset,
             bg=CLR_ENTRY,
             fg=CLR_RED,
             font=("Segoe UI", 9),
             relief="flat",
-            padx=4,
+            padx=5,
             cursor="hand2",
             state="disabled",
         )
@@ -415,7 +415,7 @@ class TransactionsTab(tk.Frame):
 
         tk.Button(
             cust_name_box,
-            text="💾 Save Asset",
+            text="Save Asset",
             command=self._save_new_custom_asset,
             bg="#4f46e5",
             fg="white",
@@ -495,13 +495,13 @@ class TransactionsTab(tk.Frame):
 
         tk.Button(
             price_box,
-            text="⚡ Market Benchmark",
+            text="Use Benchmark",
             command=self._update_price_from_market,
             bg="#3b82f6",
             fg="white",
             font=("Segoe UI", 8, "bold"),
             relief="flat",
-            padx=5,
+            padx=6,
             pady=2,
             cursor="hand2",
         ).grid(row=0, column=1, sticky="e")
@@ -537,7 +537,7 @@ class TransactionsTab(tk.Frame):
 
         self.btn_add = tk.Button(
             btn_box,
-            text="➕  Add Transaction",
+            text="Add Transaction",
             command=self._add_transaction,
             bg=CLR_GREEN,
             fg="white",
@@ -551,7 +551,7 @@ class TransactionsTab(tk.Frame):
 
         self.btn_cancel = tk.Button(
             btn_box,
-            text="❌  Cancel",
+            text="Cancel",
             command=self._cancel_edit,
             bg="#64748b",
             fg="white",
@@ -564,7 +564,7 @@ class TransactionsTab(tk.Frame):
 
         self.btn_load = tk.Button(
             btn_box,
-            text="✏️  Edit Row",
+            text="Edit Row",
             command=self._load_selected,
             bg="#555588",
             fg="white",
@@ -578,7 +578,7 @@ class TransactionsTab(tk.Frame):
 
         self.btn_del = tk.Button(
             btn_box,
-            text="🗑️  Delete",
+            text="Delete",
             command=self._delete_selected,
             bg=CLR_RED,
             fg="white",
@@ -593,7 +593,7 @@ class TransactionsTab(tk.Frame):
         # ---------------- Right Panel: Transaction History ----------------
         hist_frame = tk.LabelFrame(
             right_panel,
-            text=" 📋  TRANSACTION HISTORY ",
+            text=" TRANSACTION HISTORY ",
             font=FONT_BOLD,
             bg=CLR_PANEL,
             fg=CLR_GOLD,
@@ -636,7 +636,7 @@ class TransactionsTab(tk.Frame):
         # Data export / import action buttons
         tk.Button(
             filter_bar,
-            text="📤 Export Data",
+            text="Export Data",
             command=self._export_data,
             bg=CLR_BORDER,
             fg="white",
@@ -649,7 +649,7 @@ class TransactionsTab(tk.Frame):
 
         tk.Button(
             filter_bar,
-            text="📥 Import Data",
+            text="Import Data",
             command=self._import_data,
             bg="#4f46e5",
             fg="white",
@@ -758,7 +758,7 @@ class TransactionsTab(tk.Frame):
 
                 self.var_qty.set(f"{new_qty:g}")
                 self.var_unit_price.set(f"{new_price:,.0f}")
-                self.main_app.var_status.set(f"Unit converted: {qty_val:g} {old_unit} ➔ {new_qty:g} {new_unit}")
+                self.main_app.var_status.set(f"Unit converted: {qty_val:g} {old_unit} -> {new_qty:g} {new_unit}")
             except ValueError:
                 pass
 
@@ -863,7 +863,6 @@ class TransactionsTab(tk.Frame):
 
             action = normalize_action(r.get("action", "Buy"))
             tag = "buy" if action == "Buy" else "sell"
-            action_label = "🟢 Buy" if action == "Buy" else "🔴 Sell"
 
             self.tree.insert(
                 "",
@@ -874,7 +873,7 @@ class TransactionsTab(tk.Frame):
                     date_str,
                     cat,
                     r["asset"],
-                    action_label,
+                    action,
                     f"{r['quantity']:g}",
                     normalize_unit(r["unit"]),
                     f"{r['unit_price']:,.0f}",
@@ -942,7 +941,7 @@ class TransactionsTab(tk.Frame):
 
             save_db(self.main_app.db)
             self.editing_id = None
-            self.btn_add.configure(text="➕  Add Transaction", bg=CLR_GREEN)
+            self.btn_add.configure(text="Add Transaction", bg=CLR_GREEN)
             self.btn_cancel.pack_forget()
             msg = f"Updated transaction ID {rec['id']}."
         else:
@@ -977,7 +976,7 @@ class TransactionsTab(tk.Frame):
     def _cancel_edit(self) -> None:
         """Reset edit state back to creation mode."""
         self.editing_id = None
-        self.btn_add.configure(text="➕  Add Transaction", bg=CLR_GREEN)
+        self.btn_add.configure(text="Add Transaction", bg=CLR_GREEN)
         self.btn_cancel.pack_forget()
         self.var_qty.set("")
         self.var_unit_price.set("")
@@ -997,7 +996,7 @@ class TransactionsTab(tk.Frame):
             return
 
         self.editing_id = iid
-        self.btn_add.configure(text="💾  Save Changes", bg=CLR_GOLD)
+        self.btn_add.configure(text="Save Changes", bg=CLR_GOLD)
 
         # Repack buttons in proper order
         for btn in (self.btn_add, self.btn_cancel, self.btn_load, self.btn_del):
@@ -1384,9 +1383,9 @@ class TransactionsTab(tk.Frame):
             choice = messagebox.askyesnocancel(
                 "Import Mode",
                 f"Found {len(imported_records)} transactions.\n\n"
-                "• Click [Yes] to MERGE with current database.\n"
-                "• Click [No] to REPLACE entire current database.\n"
-                "• Click [Cancel] to abort.",
+                "- Click [Yes] to MERGE with current database.\n"
+                "- Click [No] to REPLACE entire current database.\n"
+                "- Click [Cancel] to abort.",
                 default=messagebox.YES,
             )
             if choice is None:

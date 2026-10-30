@@ -41,7 +41,7 @@ class PortfolioTab(tk.Frame):
         # State variables for What-If simulator
         self.var_wi_asset = tk.StringVar()
         self.var_wi_target_price = tk.StringVar()
-        self.var_wi_result = tk.StringVar(value="Enter a simulated sell target price to forecast projected PnL.")
+        self.var_wi_result = tk.StringVar(value="Enter a target sell price to forecast projected PnL.")
 
         # State variables for manual benchmark price updates
         self.var_buy_price = tk.StringVar()
@@ -61,7 +61,7 @@ class PortfolioTab(tk.Frame):
 
         tk.Label(
             filter_bar,
-            text="🔍 Filter by Category:",
+            text="Filter by Category:",
             bg=CLR_BG,
             fg=CLR_TEXT,
             font=FONT_BOLD,
@@ -125,7 +125,7 @@ class PortfolioTab(tk.Frame):
         # Middle Section: Holdings Detail Table
         table_label = tk.Label(
             self,
-            text="💼  PORTFOLIO HOLDINGS (Select a row to quickly sync the benchmark price updater)",
+            text="PORTFOLIO HOLDINGS (Select a row to inspect or update benchmark prices)",
             font=FONT_BOLD,
             bg=CLR_BG,
             fg=CLR_HEAD,
@@ -161,7 +161,7 @@ class PortfolioTab(tk.Frame):
         self.tree.heading("Category", text="Category")
         self.tree.heading("Qty", text="Quantity")
         self.tree.heading("Unit", text="Unit")
-        self.tree.heading("AvgCost", text="Avg Cost (Basis)")
+        self.tree.heading("AvgCost", text="Avg Cost Basis")
         self.tree.heading("MarketPrice", text="Market Benchmark")
         self.tree.heading("TotalCost", text="Total Invested")
         self.tree.heading("CurrentValue", text="Current Value")
@@ -197,7 +197,7 @@ class PortfolioTab(tk.Frame):
         # Left Panel: Market Price Benchmark Updater
         price_frame = tk.LabelFrame(
             bottom_frame,
-            text=" ✏️  BENCHMARK MARKET PRICES ",
+            text=" BENCHMARK MARKET PRICES ",
             font=FONT_BOLD,
             bg=CLR_PANEL,
             fg=CLR_GOLD,
@@ -274,7 +274,7 @@ class PortfolioTab(tk.Frame):
 
         btn_save_price = tk.Button(
             price_grid,
-            text="💾  Save Prices",
+            text="Save Prices",
             command=self._save_price,
             bg=CLR_GOLD,
             fg="white",
@@ -289,7 +289,7 @@ class PortfolioTab(tk.Frame):
         # Right Panel: What-If Profit Simulation
         wi_frame = tk.LabelFrame(
             bottom_frame,
-            text=" 🔮  WHAT-IF PROFIT SIMULATOR ",
+            text=" WHAT-IF PROFIT SIMULATOR ",
             font=FONT_BOLD,
             bg=CLR_PANEL,
             fg=CLR_GOLD,
@@ -333,7 +333,7 @@ class PortfolioTab(tk.Frame):
 
         btn_calc = tk.Button(
             wi_grid,
-            text="▶  Calculate",
+            text="Calculate",
             command=self._calculate_whatif,
             bg=CLR_GREEN,
             fg="white",
@@ -389,8 +389,8 @@ class PortfolioTab(tk.Frame):
             filtered_pnl += h["pnl"]
 
             tag = "green" if h["pnl"] >= 0 else "red"
-            pnl_indicator = "🟢 +" if h["pnl"] >= 0 else "🔴 -"
-            pnl_str = f"{pnl_indicator}{abs(h['pnl']):,.0f} đ" if h["market_price"] > 0 else "—"
+            sign_prefix = "+" if h["pnl"] >= 0 else "-"
+            pnl_str = f"{sign_prefix}{abs(h['pnl']):,.0f} đ" if h["market_price"] > 0 else "—"
 
             pct_sign = "+" if h["pnl_pct"] >= 0 else ""
             pnl_pct_str = f"{pct_sign}{h['pnl_pct']:.2f}%" if h["market_price"] > 0 else "—"
@@ -501,7 +501,7 @@ class PortfolioTab(tk.Frame):
 
         save_market_prices(self.main_app.current_prices)
         self.main_app.var_status.set(
-            f"Saved updated price for [{cat}]: {buy_val:,.0f}đ / {sell_val:,.0f}đ per {self.var_price_unit.get()}."
+            f"Saved price for [{cat}]: {buy_val:,.0f}đ / {sell_val:,.0f}đ per {self.var_price_unit.get()}."
         )
         self.refresh_view()
 
@@ -530,11 +530,11 @@ class PortfolioTab(tk.Frame):
         sign = "+" if pnl >= 0 else ""
         sign_pct = "+" if roi >= 0 else ""
         color = CLR_GREEN if pnl >= 0 else CLR_RED
-        status_label = "PROFIT 🎉" if pnl >= 0 else "LOSS ⚠️"
+        status_label = "PROFIT" if pnl >= 0 else "LOSS"
 
         self.lbl_result.configure(fg=color)
         self.var_wi_result.set(
-            f"📌 Scenario Simulation for [{asset}]:\n"
+            f"Scenario Simulation for [{asset}]:\n"
             f"   Holding: {qty:g} {unit}  |  Avg Cost Basis: {h['avg_price']:,.0f} đ\n"
             f"   Hypothetical Exit Price: {target_price:,.0f} đ / {unit}\n"
             f"   Estimated Gross Proceeds: {total_proceeds:,.0f} đ\n"
