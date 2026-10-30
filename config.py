@@ -147,22 +147,38 @@ def normalize_unit(unit_name: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Default Built-in Seed Assets (100% English)
+# Standard Units & Default Presets (International Standards)
+# ---------------------------------------------------------------------------
+STANDARD_UNITS: List[str] = ["Ounce", "Gram", "Kilogram", "Tael", "Chi"]
+DEFAULT_UNIT: str = "Ounce"
+
+# ---------------------------------------------------------------------------
+# Default Built-in Seed Assets (International Bullion Standards)
 # ---------------------------------------------------------------------------
 DEFAULT_ASSETS: List[Dict[str, Any]] = [
     {
-        "name": "SJC Gold Bar 9999",
+        "name": "Gold American Eagle 1 oz",
         "category": "Gold",
-        "unit": "Tael",
+        "unit": "Ounce",
     },
     {
-        "name": "Doji Round Gold Ring",
+        "name": "Gold Canadian Maple Leaf 1 oz",
         "category": "Gold",
-        "unit": "Chi",
+        "unit": "Ounce",
     },
     {
-        "name": "Global Spot Silver",
+        "name": "PAMP Suisse Gold Bar 100g",
+        "category": "Gold",
+        "unit": "Gram",
+    },
+    {
+        "name": "Silver American Eagle 1 oz",
         "category": "Silver",
-        "unit": "Tael",
+        "unit": "Ounce",
+    },
+    {
+        "name": "Silver Bar 10 oz",
+        "category": "Silver",
+        "unit": "Ounce",
     },
 ]

@@ -31,7 +31,7 @@
 ## Overview
 
 Most retail investors who accumulate physical gold, silver, or precious assets face distinct tracking challenges:
-1. **Disparate Bullion Units**: Transactions occur in non-metric traditional units (e.g., Vietnamese *Tael / Luong*, *Chi / Mace*, fractional *0.1-5 Chi*) alongside international metrics (*Troy Ounce*, *Gram*).
+1. **Multi-Standard Bullion Units**: Precious metals are traded in international standards (**Troy Ounce**, **Gram**, **Kilogram**) as well as regional traditional bullion denominations (**Tael**, **Chi**).
 2. **Complex Cost Basis**: Staggered purchases over months or years require an accurate **Moving Weighted Average Cost (MAC)** basis to correctly compute true capital outlays and real-time PnL.
 3. **Privacy Concerns**: Storing exact physical metal holdings and net worth on third-party cloud SaaS introduces privacy and security risks.
 
@@ -43,7 +43,7 @@ Most retail investors who accumulate physical gold, silver, or precious assets f
 
 ### Portfolio Management & Financial Analytics
 * **Moving Weighted Average Cost (MAC) Engine**: Automatically computes cost basis chronologically across staggered buy and partial sell transactions.
-* **Dual-Region Unit Conversions**: Seamlessly translates between traditional bullion units (*Tael*, *Chi*, fractional *Chi*) and international standards (*Troy Ounce*, *Gram*) using standard Troy conversion ratios ($1\text{ Tael} = 1.2057\text{ oz troy}$).
+* **Universal Bullion Unit Engine**: Native support for global trading metrics (*Troy Ounce*, *Gram*, *Kilogram*) alongside traditional regional units (*Tael*, *Chi*) using standardized Troy conversion ratios ($1\text{ Tael} = 1.2057\text{ oz troy}$, $1\text{ oz} = 31.1035\text{ g}$).
 * **Real-Time Unrealized PnL & ROI**: Instant valuation cards showing total invested capital, current portfolio market value, net unrealized gain/loss, and ROI %.
 * **Benchmark Market Quotes**: Quick-update panel to set current market buy/sell prices by category (*Gold*, *Silver*) with automatic unit parity.
 

@@ -217,14 +217,14 @@ class TransactionsTab(tk.Frame):
         self.var_custom_name = tk.StringVar()
         self.var_action = tk.StringVar(value="Buy")
         self.var_qty = tk.StringVar()
-        self.var_unit = tk.StringVar(value="Tael")
+        self.var_unit = tk.StringVar(value="Ounce")
         self.var_unit_price = tk.StringVar()
         self.var_note = tk.StringVar()
         self.var_search = tk.StringVar()
         self.var_filter_cat = tk.StringVar(value="All")
         self.var_total_preview = tk.StringVar(value="Estimated Total: -")
         self.editing_id: Optional[int] = None
-        self.last_unit: str = "Tael"
+        self.last_unit: str = "Ounce"
 
         self._build_ui()
         self._on_category_change()
@@ -463,8 +463,8 @@ class TransactionsTab(tk.Frame):
             qty_unit_box,
             textvariable=self.var_unit,
             values=[
-                "Tael", "Chi", "0.1 Chi", "0.2 Chi", "0.3 Chi",
-                "0.5 Chi", "2 Chi", "3 Chi", "5 Chi", "Ounce", "Gram",
+                "Ounce", "Gram", "Kilogram", "Tael", "Chi",
+                "0.1 Chi", "0.2 Chi", "0.5 Chi", "1 Chi", "2 Chi", "5 Chi",
             ],
             font=FONT_MAIN,
             width=8,

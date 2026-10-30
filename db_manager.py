@@ -236,10 +236,10 @@ def calculate_portfolio(
             elif cat == "Silver":
                 price_info = current_prices.get("Bạc")
         if not price_info:
-            price_info = {"buy": 0.0, "sell": 0.0, "unit": "Tael"}
+            price_info = {"buy": 0.0, "sell": 0.0, "unit": "Ounce"}
 
         market_buy_price = float(price_info.get("buy", 0.0))
-        price_unit = normalize_unit(price_info.get("unit", "Tael"))
+        price_unit = normalize_unit(price_info.get("unit", "Ounce"))
 
         # Convert category benchmark price to asset unit
         if market_buy_price > 0:

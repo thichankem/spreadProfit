@@ -229,11 +229,11 @@ class PortfolioTab(tk.Frame):
         tk.Label(price_grid, text="Price Unit:", bg=CLR_PANEL, fg=CLR_TEXT, font=FONT_BOLD).grid(
             row=0, column=2, sticky="e", padx=10, pady=5
         )
-        self.var_price_unit = tk.StringVar(value="Tael")
+        self.var_price_unit = tk.StringVar(value="Ounce")
         self.cb_price_unit = ttk.Combobox(
             price_grid,
             textvariable=self.var_price_unit,
-            values=["Tael", "Chi", "Ounce", "Gram"],
+            values=["Ounce", "Gram", "Kilogram", "Tael", "Chi"],
             state="readonly",
             font=FONT_MAIN,
             width=10,
