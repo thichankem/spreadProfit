@@ -1,15 +1,16 @@
-# build_exe.py
 """
-Đóng gói ứng dụng thành 1 file exe duy nhất kèm dữ liệu hiện tại.
+Automated PyInstaller build script for spreadProfit.
 
-Cách dùng:
+Compiles the standalone Windows executable and produces a portable distribution zip:
+    dist/SpreadProfit.exe             -> Self-contained single-file binary with embedded seed data
+    dist/SpreadProfit_portable/       -> Portable directory bundle (exe + data folder + quickstart guide)
+    dist/SpreadProfit_portable.zip    -> Compressed distribution archive for distribution
+
+Usage:
     python build_exe.py
-
-Kết quả:
-    dist/QuanLyTaiSan.exe                  -> file exe chạy độc lập (đã nhúng sẵn dữ liệu)
-    dist/QuanLyTaiSan_portable/            -> bộ portable: exe + thư mục data + hướng dẫn
-    dist/QuanLyTaiSan_portable.zip         -> bản nén để chép sang máy Windows khác
 """
+
+from __future__ import annotations
 
 import os
 import shutil
@@ -17,109 +18,120 @@ import subprocess
 import sys
 import zipfile
 
-# Đảm bảo in được tiếng Việt trên Command Prompt
 try:
     sys.stdout.reconfigure(encoding="utf-8")
 except Exception:
     pass
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
-SEED_DIR = os.path.join(ROOT, "_seed")
-DATA_DIR = os.path.join(ROOT, "data")
-DIST_DIR = os.path.join(ROOT, "dist")
-PORTABLE_DIR = os.path.join(DIST_DIR, "QuanLyTaiSan_portable")
-EXE_NAME = "QuanLyTaiSan.exe"
-DATA_FILES = ("gold_transactions.json", "market_prices.json", "custom_assets.json")
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+SEED_DIR = os.path.join(ROOT_DIR, "_seed")
+DATA_DIR = os.path.join(ROOT_DIR, "data")
+DIST_DIR = os.path.join(ROOT_DIR, "dist")
+PORTABLE_DIR = os.path.join(DIST_DIR, "SpreadProfit_portable")
+EXE_NAME = "SpreadProfit.exe"
+TRACKED_FILES = ("gold_transactions.json", "market_prices.json", "custom_assets.json")
 
-HUONG_DAN = """HƯỚNG DẪN SỬ DỤNG - Quản lý Tài Sản Cá Nhân
-================================================
+PORTABLE_INSTRUCTIONS = """SpreadProfit - Portable Distribution Quickstart
+===================================================
 
-1. Chép nguyên thư mục này sang máy Windows khác (USB, OneDrive, Zalo...).
-2. Nhấn đúp vào file QuanLyTaiSan.exe là chạy được ngay, không cần cài Python
-   hay bất cứ phần mềm nào khác.
+1. Extract or copy this entire folder to any Windows machine (USB flash drive, OneDrive, etc.).
+2. Double-click SpreadProfit.exe to run. No Python installation or runtime setup is required.
 
-DỮ LIỆU CỦA BẠN
----------------
-- Toàn bộ giao dịch, giá thị trường và danh mục tài sản được lưu trong thư mục "data"
-  nằm cạnh file exe. Muốn sao lưu thì chỉ cần copy thư mục "data" này.
-- Nếu chỉ chép mỗi file QuanLyTaiSan.exe (không chép thư mục data), ứng dụng vẫn chạy
-  và tự khôi phục dữ liệu đã được nhúng sẵn bên trong exe tại thời điểm đóng gói.
-- Muốn chuyển dữ liệu MỚI NHẤT sang máy khác thì phải chép cả thư mục "data".
-- Nếu đặt exe vào nơi không có quyền ghi (ví dụ C:/Program Files), dữ liệu sẽ tự
-  chuyển sang lưu tại: %APPDATA%/spreadProfit
+YOUR DATA & PRIVACY
+-------------------
+• All transactions, custom assets, and benchmark market quotes are stored in the local 'data/' folder
+  adjacent to the executable.
+• To backup your portfolio, copy the 'data/' folder or use the in-app 'Cloud Backup' button.
+• If launched in a restricted directory without write access (e.g., C:/Program Files), SpreadProfit
+  automatically falls back to storing data safely in: %APPDATA%/spreadProfit
 
-LƯU Ý
+NOTES
 -----
-- Lần chạy đầu tiên có thể mất 5-15 giây để giải nén, các lần sau nhanh hơn.
-- Windows SmartScreen có thể cảnh báo "Unknown publisher" vì file chưa mua chữ ký số:
-  bấm "More info" -> "Run anyway".
-- Một số phần mềm diệt virus có thể cảnh báo nhầm với file exe đóng gói bằng PyInstaller.
+• First launch may take 5–10 seconds to extract bundled resources into memory. Subsequent runs are instant.
+• Windows SmartScreen may show an 'Unknown Publisher' prompt because the binary is unsigned.
+  Click 'More info' -> 'Run anyway'.
 """
 
 
-def collect_seed():
-    """Gom dữ liệu đang dùng làm bản nhúng trong exe."""
+def collect_seed_data() -> None:
+    """Consolidate current database files to embed inside the standalone binary."""
     os.makedirs(SEED_DIR, exist_ok=True)
-    for name in DATA_FILES:
-        for source in (os.path.join(DATA_DIR, name), os.path.join(ROOT, name)):
-            if os.path.exists(source):
-                shutil.copyfile(source, os.path.join(SEED_DIR, name))
-                print(f"  + nhúng dữ liệu: {os.path.relpath(source, ROOT)}")
+    for fname in TRACKED_FILES:
+        source_candidates = (
+            os.path.join(DATA_DIR, fname),
+            os.path.join(ROOT_DIR, fname),
+        )
+        for src in source_candidates:
+            if os.path.exists(src):
+                shutil.copyfile(src, os.path.join(SEED_DIR, fname))
+                print(f"  + Embedding seed file: {os.path.relpath(src, ROOT_DIR)}")
                 break
         else:
-            # Không có dữ liệu thì tạo file rỗng để PyInstaller không báo thiếu
-            with open(os.path.join(SEED_DIR, name), "w", encoding="utf-8") as f:
-                f.write("[]" if name == "gold_transactions.json" else "{}")
-            print(f"  + nhúng dữ liệu rỗng: {name}")
+            with open(os.path.join(SEED_DIR, fname), "w", encoding="utf-8") as f:
+                f.write("[]" if fname == "gold_transactions.json" else "{}")
+            print(f"  + Initializing empty seed file: {fname}")
 
 
-def run_pyinstaller():
-    print("\n[2/4] Chạy PyInstaller (có thể mất vài phút)...")
+def run_pyinstaller() -> None:
+    """Invoke PyInstaller build with clean caches."""
+    print("\n[2/4] Invoking PyInstaller build process...")
     subprocess.check_call(
         [sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "app.spec"],
-        cwd=ROOT,
+        cwd=ROOT_DIR,
     )
 
 
-def make_portable():
-    print("\n[3/4] Tạo bộ portable...")
+def assemble_portable_bundle() -> None:
+    """Assemble portable directory bundle containing executable and data folder."""
+    print("\n[3/4] Assembling portable distribution bundle...")
     exe_path = os.path.join(DIST_DIR, EXE_NAME)
     if not os.path.exists(exe_path):
-        raise SystemExit(f"Không tìm thấy {exe_path}")
+        raise SystemExit(f"Build failed: {exe_path} not found.")
 
     if os.path.isdir(PORTABLE_DIR):
         shutil.rmtree(PORTABLE_DIR)
     os.makedirs(os.path.join(PORTABLE_DIR, "data"), exist_ok=True)
 
     shutil.copyfile(exe_path, os.path.join(PORTABLE_DIR, EXE_NAME))
-    for name in DATA_FILES:
-        shutil.copyfile(os.path.join(SEED_DIR, name), os.path.join(PORTABLE_DIR, "data", name))
-    with open(os.path.join(PORTABLE_DIR, "HUONG_DAN.txt"), "w", encoding="utf-8") as f:
-        f.write(HUONG_DAN)
+    for fname in TRACKED_FILES:
+        src = os.path.join(SEED_DIR, fname)
+        if os.path.exists(src):
+            shutil.copyfile(src, os.path.join(PORTABLE_DIR, "data", fname))
+
+    with open(os.path.join(PORTABLE_DIR, "QUICKSTART.txt"), "w", encoding="utf-8") as f:
+        f.write(PORTABLE_INSTRUCTIONS)
 
 
-def make_zip():
-    print("\n[4/4] Nén thành file zip...")
+def compress_distribution_zip() -> str:
+    """Compress the portable directory into a distributable zip archive."""
+    print("\n[4/4] Compressing portable distribution archive...")
     zip_path = PORTABLE_DIR + ".zip"
     if os.path.exists(zip_path):
         os.remove(zip_path)
+
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        for folder, _, files in os.walk(PORTABLE_DIR):
-            for name in files:
-                full = os.path.join(folder, name)
-                zf.write(full, os.path.relpath(full, DIST_DIR))
+        for root, _, files in os.walk(PORTABLE_DIR):
+            for file in files:
+                full_path = os.path.join(root, file)
+                zf.write(full_path, os.path.relpath(full_path, DIST_DIR))
     return zip_path
 
 
-if __name__ == "__main__":
-    print("[1/4] Gom dữ liệu hiện tại...")
-    collect_seed()
+def main() -> None:
+    print("=== spreadProfit Standalone Distribution Builder ===")
+    print("[1/4] Gathering seed database files...")
+    collect_seed_data()
     run_pyinstaller()
-    make_portable()
-    zip_path = make_zip()
+    assemble_portable_bundle()
+    zip_path = compress_distribution_zip()
 
-    size_mb = os.path.getsize(os.path.join(PORTABLE_DIR, EXE_NAME)) / 1024 / 1024
-    print("\n=== XONG ===")
-    print(f"  exe      : {os.path.join(DIST_DIR, EXE_NAME)}  ({size_mb:.1f} MB)")
-    print(f"  portable : {PORTABLE_DIR}")
-    print(f"  zip      : {zip_path}")
+    exe_file = os.path.join(PORTABLE_DIR, EXE_NAME)
+    size_mb = os.path.getsize(exe_file) / (1024 * 1024)
+    print("\n=== BUILD COMPLETE ===")
+    print(f"  Binary      : {exe_file} ({size_mb:.1f} MB)")
+    print(f"  Portable Dir: {PORTABLE_DIR}")
+    print(f"  Zip Archive : {zip_path}")
+
+
+if __name__ == "__main__":
+    main()

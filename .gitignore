@@ -1,6 +1,35 @@
+# Byte-compiled / optimized / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyInstaller / Build artifacts
 build/
 dist/
 _seed/
-.venv-build/
-__pycache__/
-*.pyc
+*.spec
+!app.spec
+
+# Virtual Environments
+.venv/
+.venv*/
+venv/
+env/
+ENV/
+
+# Data backups and exported user files (keep seed data, ignore local runtime exports & backups)
+data/backups/
+data/exports/
+*.bak
+*.tmp
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS Generated files
+Thumbs.db
+desktop.ini
+.DS_Store

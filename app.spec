@@ -1,7 +1,9 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-Cấu hình PyInstaller: đóng gói toàn bộ ứng dụng thành MỘT file exe duy nhất,
-kèm dữ liệu hiện tại được nhúng sẵn (thư mục _seed) để chạy được ngay trên máy Windows mới.
+PyInstaller packaging specification for spreadProfit.
+
+Bundles Python bytecode, icons, and seed database files into a self-contained
+single-file Windows executable (SpreadProfit.exe).
 """
 
 datas = [
@@ -20,6 +22,7 @@ a = Analysis(
     hiddenimports=[
         'openpyxl',
         'matplotlib.backends.backend_tkagg',
+        'cloud_backup',
     ],
     hookspath=[],
     hooksconfig={},
@@ -33,6 +36,7 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+
 pyz = PYZ(a.pure)
 
 exe = EXE(
@@ -41,7 +45,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='QuanLyTaiSan',
+    name='SpreadProfit',
     icon='app_icon.ico',
     debug=False,
     bootloader_ignore_signals=False,

@@ -1,17 +1,26 @@
-# db_manager.py
 """
-Quản lý cơ sở dữ liệu giao dịch dưới dạng JSON và tính toán các chỉ số danh mục đầu tư.
+Database management and portfolio financial calculation engine for spreadProfit.
+
+Handles persistent storage in JSON format, directory resolution for portable/installed
+modes, seed restoration, atomic file writes, and moving weighted average cost (MAC)
+PnL analytics.
 """
+
+from __future__ import annotations
 
 import json
 import os
 import shutil
 import sys
+import tempfile
+from typing import Any, Dict, List, Optional, Tuple
+
+from config import get_unit_factor
 
 APP_NAME = "spreadProfit"
+DATA_FILE_NAMES = ("gold_transactions.json", "market_prices.json", "custom_assets.json")
 
-# BASE_DIR   : thư mục chứa file exe (khi đã đóng gói) hoặc thư mục mã nguồn.
-# BUNDLE_DIR : thư mục tạm _MEIPASS chứa dữ liệu mẫu được nhúng sẵn trong exe.
+# Resolve base execution and bundle directories
 if getattr(sys, "frozen", False):
     BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
     BUNDLE_DIR = getattr(sys, "_MEIPASS", BASE_DIR)
@@ -19,27 +28,25 @@ else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     BUNDLE_DIR = BASE_DIR
 
-DATA_FILE_NAMES = ("gold_transactions.json", "market_prices.json", "custom_assets.json")
 
-
-def _is_writable(path):
-    """Kiểm tra thư mục có ghi được không (ví dụ Program Files thì không)."""
+def _is_writable(path: str) -> bool:
+    """Verify write permissions for a target directory."""
     try:
         os.makedirs(path, exist_ok=True)
-        probe = os.path.join(path, ".write_test")
+        probe = os.path.join(path, ".write_probe")
         with open(probe, "w", encoding="utf-8") as f:
-            f.write("")
+            f.write("ok")
         os.remove(probe)
         return True
     except Exception:
         return False
 
 
-def _resolve_data_dir():
+def _resolve_data_dir() -> str:
     """
-    Chọn nơi lưu dữ liệu theo thứ tự ưu tiên:
-      1. Thư mục 'data' nằm cạnh file exe  -> chạy kiểu portable, copy sang máy khác là xong.
-      2. %APPDATA%/spreadProfit           -> dự phòng khi thư mục exe không ghi được.
+    Determine the primary data directory based on execution context:
+    1. Portable mode: 'data' folder alongside executable or root script.
+    2. Fallback mode: %APPDATA%/spreadProfit when the parent directory is read-only.
     """
     portable = os.path.join(BASE_DIR, "data")
     if _is_writable(portable):
@@ -52,26 +59,45 @@ def _resolve_data_dir():
 DATA_DIR = _resolve_data_dir()
 
 
-def _seed_data_files():
-    """
-    Lần chạy đầu tiên trên máy mới: khôi phục dữ liệu từ bản nhúng trong exe,
-    hoặc từ file JSON cũ nằm cạnh exe/mã nguồn (tương thích ngược phiên bản trước).
-    """
+def _atomic_write_json(file_path: str, data: Any) -> None:
+    """Atomically write JSON data using a temporary swap file to prevent corruption."""
+    os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
+    dir_name = os.path.dirname(os.path.abspath(file_path))
+    temp_file = tempfile.NamedTemporaryFile("w", dir=dir_name, delete=False, encoding="utf-8")
+    try:
+        with temp_file as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        shutil.move(temp_file.name, file_path)
+    except Exception:
+        if os.path.exists(temp_file.name):
+            try:
+                os.remove(temp_file.name)
+            except Exception:
+                pass
+        raise
+
+
+def _seed_data_files() -> None:
+    """Restore seed data files from bundled resources or root on fresh launch."""
     for name in DATA_FILE_NAMES:
         target = os.path.join(DATA_DIR, name)
         if os.path.exists(target):
             continue
-        for source in (os.path.join(BASE_DIR, name), os.path.join(BUNDLE_DIR, "_seed", name)):
-            if os.path.abspath(source) == os.path.abspath(target):
-                continue
-            if os.path.exists(source):
+        candidate_sources = (
+            os.path.join(BASE_DIR, name),
+            os.path.join(BUNDLE_DIR, "_seed", name),
+            os.path.join(BASE_DIR, "_seed", name),
+        )
+        for source in candidate_sources:
+            if os.path.exists(source) and os.path.abspath(source) != os.path.abspath(target):
                 try:
                     shutil.copyfile(source, target)
+                    break
                 except Exception:
                     pass
-                break
 
 
+# Ensure seed files are populated if missing
 _seed_data_files()
 
 DB_FILE = os.path.join(DATA_DIR, "gold_transactions.json")
@@ -79,18 +105,18 @@ PRICES_FILE = os.path.join(DATA_DIR, "market_prices.json")
 CUSTOM_ASSETS_FILE = os.path.join(DATA_DIR, "custom_assets.json")
 
 
-def load_db():
-    """Tải dữ liệu từ file JSON. Nếu file chưa tồn tại, khởi tạo dữ liệu mẫu."""
+def load_db() -> List[Dict[str, Any]]:
+    """Load transaction records from JSON storage, initializing sample record if missing."""
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                if isinstance(data, list):
+                    return data
         except Exception:
-            # Nếu file lỗi, trả về list rỗng
             return []
-    
-    # Hóa đơn mẫu số 00271176 (Bảo Tín Mạnh Hải, 26/03/2026)
-    seed = [
+
+    initial_seed = [
         {
             "id": 1,
             "date": "2026-03-26",
@@ -101,190 +127,170 @@ def load_db():
             "unit": "Chỉ",
             "unit_price": 18500000.0,
             "total": 37000000.0,
-            "note": "HĐ 00271176 – 2 nhẫn Kim Gia Bảo (KGB1C10022001)",
+            "note": "HĐ 00271176 – 2 nhẫn Kim Gia Bảo",
         }
     ]
-    save_db(seed)
-    return seed
+    save_db(initial_seed)
+    return initial_seed
 
 
-def save_db(data):
-    """Ghi dữ liệu vào file JSON."""
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+def save_db(data: List[Dict[str, Any]]) -> None:
+    """Save transaction records atomically to JSON storage."""
+    _atomic_write_json(DB_FILE, data)
 
 
-def next_id(data):
-    """Tìm ID tiếp theo cho bản ghi mới."""
-    return max((r["id"] for r in data), default=0) + 1
+def next_id(data: List[Dict[str, Any]]) -> int:
+    """Generate the next incremental integer identifier for a record."""
+    return max((int(r.get("id", 0)) for r in data), default=0) + 1
 
 
-def calculate_portfolio(transactions, current_prices):
+def calculate_portfolio(
+    transactions: List[Dict[str, Any]],
+    current_prices: Dict[str, Any],
+) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, float]]:
     """
-    Tính toán trạng thái danh mục đầu tư hiện tại từ các giao dịch.
-    Áp dụng phương pháp giá vốn bình quân gia quyền di động.
-    
-    current_prices: dict chứa giá thị trường {category: {"buy": price, "sell": price}}
-    Trả về:
-        holdings: dict {asset_name -> dữ liệu tài sản}
-        summary: dict chứa tổng số liệu (total_cost, total_value, total_pnl, pnl_pct)
+    Compute real-time portfolio holdings, average cost, market value, and PnL.
+
+    Applies the moving weighted average cost (MAC) accounting method to accurately
+    compute cost basis across chronological buy and sell events.
+
+    Args:
+        transactions: List of transaction dictionaries.
+        current_prices: Dict mapping category -> {'buy': float, 'sell': float, 'unit': str}.
+
+    Returns:
+        Tuple of:
+          - active_holdings: Dict[asset_name, asset_metrics_dict]
+          - summary: Dict containing total_cost, total_value, total_pnl, and pnl_pct.
     """
-    holdings = {}
-    
-    # Sắp xếp giao dịch theo ngày tăng dần để tính toán chính xác giá vốn bình quân di động
-    sorted_txs = sorted(transactions, key=lambda x: x.get("date", ""))
-    
+    holdings: Dict[str, Dict[str, Any]] = {}
+
+    # Sort chronologically to preserve moving average accuracy
+    sorted_txs = sorted(transactions, key=lambda x: str(x.get("date", "")))
+
     for r in sorted_txs:
-        asset = r["asset"]
+        asset = r.get("asset", "").strip()
+        if not asset:
+            continue
         category = r.get("category", "Vàng")
-        unit = r["unit"]
-        
+        unit = r.get("unit", "Lượng")
+        action = r.get("action", "Mua")
+        qty = float(r.get("quantity", 0.0))
+        total = float(r.get("total", 0.0))
+
         if asset not in holdings:
             holdings[asset] = {
                 "asset": asset,
                 "category": category,
                 "qty": 0.0,
                 "cost": 0.0,
-                "unit": unit
+                "unit": unit,
             }
-            
-        qty = r["quantity"]
-        total = r["total"]
-        
-        if r["action"] == "Mua":
+
+        if action == "Mua":
             holdings[asset]["qty"] += qty
             holdings[asset]["cost"] += total
-        else:  # Bán
-            if holdings[asset]["qty"] > 0:
-                avg_cost = holdings[asset]["cost"] / holdings[asset]["qty"]
+        else:  # Sell
+            current_qty = holdings[asset]["qty"]
+            if current_qty > 0:
+                avg_unit_cost = holdings[asset]["cost"] / current_qty
                 holdings[asset]["qty"] -= qty
-                holdings[asset]["cost"] -= qty * avg_cost
-                
+                holdings[asset]["cost"] -= qty * avg_unit_cost
+
+                # Mitigate floating point rounding artifacts near zero
                 if holdings[asset]["qty"] < 1e-9:
                     holdings[asset]["qty"] = 0.0
                     holdings[asset]["cost"] = 0.0
 
-    # Định nghĩa các yếu tố quy đổi đơn vị
-    def get_factor(u_str):
-        u = str(u_str).strip().lower()
-        factors = {
-            "lượng": 1.2057,
-            "cây": 1.2057,
-            "cay": 1.2057,
-            "luong": 1.2057,
-            "chỉ": 0.12057,
-            "chi": 0.12057,
-            "0.1 chỉ": 0.012057,
-            "0.1 chi": 0.012057,
-            "0.2 chỉ": 0.024114,
-            "0.2 chi": 0.024114,
-            "0.3 chỉ": 0.036171,
-            "0.3 chi": 0.036171,
-            "0.5 chỉ": 0.060285,
-            "0.5 chi": 0.060285,
-            "2 chỉ": 0.24114,
-            "2 chi": 0.24114,
-            "3 chỉ": 0.36171,
-            "3 chi": 0.36171,
-            "5 chỉ": 0.60285,
-            "5 chi": 0.60285,
-            "ounce": 1.0,
-            "oz": 1.0
-        }
-        return factors.get(u, 1.0)
-
-    # Tính toán giá trị hiện tại và lời lỗ theo giá của Nhóm tài sản
     total_cost = 0.0
     total_value = 0.0
     total_pnl = 0.0
-    
-    active_holdings = {}
+    active_holdings: Dict[str, Dict[str, Any]] = {}
+
     for asset, h in holdings.items():
         if h["qty"] <= 0:
             continue
-            
-        avg_price = h["cost"] / h["qty"]
+
+        avg_price = h["cost"] / h["qty"] if h["qty"] > 0 else 0.0
         cat = h["category"]
-        
-        # Tìm giá mua vào trên thị trường của Nhóm tài sản này
         price_info = current_prices.get(cat, {"buy": 0.0, "sell": 0.0, "unit": "Lượng"})
-        market_buy_price = price_info.get("buy", 0.0)
+        market_buy_price = float(price_info.get("buy", 0.0))
         price_unit = price_info.get("unit", "Lượng")
-        
-        # Quy đổi giá thị trường của nhóm sang đơn vị của tài sản
+
+        # Convert category benchmark price to asset unit
         if market_buy_price > 0:
-            ratio = get_factor(price_unit) / get_factor(h["unit"])
-            asset_market_price = market_buy_price / ratio
+            ratio = get_unit_factor(price_unit) / get_unit_factor(h["unit"])
+            asset_market_price = market_buy_price / ratio if ratio > 0 else market_buy_price
         else:
             asset_market_price = 0.0
-            
+
         current_val = h["qty"] * asset_market_price
         pnl = current_val - h["cost"] if asset_market_price > 0 else 0.0
         pnl_pct = (pnl / h["cost"] * 100) if (h["cost"] > 0 and asset_market_price > 0) else 0.0
-        
+
         h["avg_price"] = avg_price
         h["market_price"] = asset_market_price
         h["current_value"] = current_val
         h["pnl"] = pnl
         h["pnl_pct"] = pnl_pct
-        
+
         total_cost += h["cost"]
         if asset_market_price > 0:
             total_value += current_val
             total_pnl += pnl
         else:
             total_value += h["cost"]
-            
+
         active_holdings[asset] = h
-        
-    pnl_pct_total = (total_pnl / total_cost * 100) if total_cost > 0 else 0.0
-    
+
+    overall_roi = (total_pnl / total_cost * 100) if total_cost > 0 else 0.0
     summary = {
         "total_cost": total_cost,
         "total_value": total_value,
         "total_pnl": total_pnl,
-        "pnl_pct": pnl_pct_total
+        "pnl_pct": overall_roi,
     }
-    
+
     return active_holdings, summary
 
 
-def load_market_prices():
-    """Tải giá thị trường thủ công theo Nhóm (Vàng/Bạc) từ file JSON."""
+def load_market_prices() -> Dict[str, Dict[str, Any]]:
+    """Load benchmark market prices from JSON storage."""
     if os.path.exists(PRICES_FILE):
         try:
             with open(PRICES_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                if "Vàng" in data and "Bạc" in data:
+                if isinstance(data, dict) and "Vàng" in data and "Bạc" in data:
                     return data
         except Exception:
             pass
-            
-    # Tạo giá trị mặc định cho Vàng và Bạc
-    prices = {
+
+    default_prices = {
         "Vàng": {"buy": 80000000.0, "sell": 81000000.0, "unit": "Lượng"},
-        "Bạc": {"buy": 1000000.0, "sell": 1050000.0, "unit": "Lượng"}
+        "Bạc": {"buy": 1000000.0, "sell": 1050000.0, "unit": "Lượng"},
     }
-    save_market_prices(prices)
-    return prices
-
-def save_market_prices(prices):
-    """Lưu giá thị trường vào file JSON."""
-    with open(PRICES_FILE, "w", encoding="utf-8") as f:
-        json.dump(prices, f, ensure_ascii=False, indent=2)
+    save_market_prices(default_prices)
+    return default_prices
 
 
-def load_custom_assets():
-    """Tải danh sách tài sản tùy chọn của người dùng."""
+def save_market_prices(prices: Dict[str, Any]) -> None:
+    """Save benchmark market prices atomically to JSON storage."""
+    _atomic_write_json(PRICES_FILE, prices)
+
+
+def load_custom_assets() -> List[Dict[str, Any]]:
+    """Load user-defined custom asset configurations."""
     if os.path.exists(CUSTOM_ASSETS_FILE):
         try:
             with open(CUSTOM_ASSETS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                if isinstance(data, list):
+                    return data
         except Exception:
             return []
     return []
 
-def save_custom_assets(assets):
-    """Lưu danh sách tài sản tùy chọn."""
-    with open(CUSTOM_ASSETS_FILE, "w", encoding="utf-8") as f:
-        json.dump(assets, f, ensure_ascii=False, indent=2)
+
+def save_custom_assets(assets: List[Dict[str, Any]]) -> None:
+    """Save user-defined custom asset configurations atomically to JSON storage."""
+    _atomic_write_json(CUSTOM_ASSETS_FILE, assets)
